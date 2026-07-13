@@ -47,8 +47,9 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Noto Sans SC"', '"Source Han Sans SC"', 'system-ui', 'sans-serif'],
-        body: ['"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+        display: ['"Noto Serif SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
+        body: ['"PingFang SC"', '"Hiragino Sans GB"', '"Noto Sans SC"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+        numeric: ['"Fraunces"', '"Noto Serif SC"', 'Georgia', 'serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1)',

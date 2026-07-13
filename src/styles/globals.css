@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #FAF8F5;
+  --color-bg-soft: #F2EEE7;
+  --color-ink: #1A1A2E;
+  --color-ink-soft: #48484A;
+  --color-ink-mute: #8E8E93;
+  --color-line: #E8E3DA;
+  --color-brand: #FF5516;
+  --color-brand-soft: #FFF3ED;
+  --color-mint: #00D9A6;
+}
+
+.dark {
+  --color-bg: #1A1A2E;
+  --color-bg-soft: #2C2C2E;
+  --color-ink: #F5F5F7;
+  --color-ink-soft: #C7C7CC;
+  --color-ink-mute: #8E8E93;
+  --color-line: #3A3A3C;
+  --color-brand: #FF6B35;
+  --color-brand-soft: #2A1810;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: theme('fontFamily.body');
+  font-feature-settings: 'ss01', 'cv11';
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+/* Numeric: Fraunces serif for prices & stats */
+.font-numeric {
+  font-family: theme('fontFamily.numeric');
+  font-feature-settings: 'tnum', 'ss01';
+  letter-spacing: -0.01em;
+}
+
+/* Display: Noto Serif SC for editorial headlines */
+.font-display {
+  font-family: theme('fontFamily.display');
+  letter-spacing: -0.005em;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-mute);
+}
+
+/* Hide scrollbar for horizontal chip strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Paper texture overlay - subtle grain */
+.paper-grain {
+  position: relative;
+}
+.paper-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.18 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* Leaflet overrides for warm aesthetic */
+.leaflet-container {
+  font-family: theme('fontFamily.body');
+  background: #EAE4D9;
+}
+.leaflet-control-zoom a {
+  background: #fff !important;
+  color: #1A1A2E !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(26, 26, 46, 0.12);
+}
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.7) !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+}
+
+/* Price marker bubble */
+.price-marker {
+  background: #fff;
+  color: #1A1A2E;
+  border: 1px solid rgba(26, 26, 46, 0.08);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: theme('fontFamily.numeric');
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(26, 26, 46, 0.15);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+.price-marker:hover {
+  background: #FF5516;
+  color: #fff;
+  transform: scale(1.08);
+  z-index: 1000 !important;
+}
+.price-marker.is-direct {
+  background: #1A1A2E;
+  color: #fff;
+}
+.price-marker.is-direct:hover {
+  background: #FF5516;
+}
+.price-marker.is-active {
+  background: #FF5516;
+  color: #fff;
+  transform: scale(1.12);
+  z-index: 1000 !important;
+}
+
+/* Stagger entrance helper */
+.stagger > * {
+  animation: staggerFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes staggerFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Magazine divider */
+.editorial-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-ink) 20%, var(--color-ink) 80%, transparent);
+  opacity: 0.15;
+}
