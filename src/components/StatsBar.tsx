@@ -1,0 +1,177 @@
+import { useMemo } from 'react';
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { formatNumber } from '@/lib/utils';
+import { useListingStore } from '@/store/useListingStore';
+import { PLATFORM_COLORS, PLATFORM_LABELS, type Platform } from '@/types/house';
+
+const PLATFORMS: Platform[] = [
+  'lianjia',
+  'beike',
+  'anjuke',
+  '58',
+  'ziroom',
+  'personal',
+];
+
+interface StatCardProps {
+  label: string;
+  value: string;
+  hint?: string;
+}
+
+function StatCard({ label, value, hint }: StatCardProps) {
+  return (
+    <div className="rounded-xl border border-charcoal-100 bg-white p-3">
+      <div className="text-xs text-charcoal-400">{label}</div>
+      <div className="mt-0.5 text-lg font-semibold tabular-nums text-charcoal-900">
+        {value}
+      </div>
+      {hint && <div className="text-[11px] text-charcoal-400">{hint}</div>}
+    </div>
+  );
+}
+
+export default function StatsBar() {
+  const listings = useListingStore((s) => s.listings);
+  const filtered = useListingStore((s) => s.getFiltered());
+
+  const { avgPrice, avgPsm, nearSubwayRate, verifiedRate } = useMemo(() => {
+    const base = filtered.length ? filtered : listings;
+    let sum = 0;
+    let psm = 0;
+    let near = 0;
+    let verified = 0;
+    for (const l of base) {
+      sum += l.price;
+      psm += l.price / l.areaSize;
+      if (l.nearSubway) near++;
+      if (l.isVerified) verified++;
+    }
+    const n = base.length || 1;
+    return {
+      avgPrice: Math.round(sum / n),
+      avgPsm: Math.round(psm / n),
+      nearSubwayRate: Math.round((near / n) * 100),
+      verifiedRate: Math.round((verified / n) * 100),
+    };
+  }, [filtered, listings]);
+
+  const platformData = useMemo(() => {
+    const map = new Map<Platform, number>();
+    for (const p of PLATFORMS) map.set(p, 0);
+    for (const l of listings) map.set(l.platform, (map.get(l.platform) ?? 0) + 1);
+    return PLATFORMS.map((p) => ({
+      key: p,
+      name: PLATFORM_LABELS[p],
+      value: map.get(p) ?? 0,
+      color: PLATFORM_COLORS[p],
+    }));
+  }, [listings]);
+
+  const districtData = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const l of listings) {
+      map.set(l.district, (map.get(l.district) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [listings]);
+
+  return (
+    <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+      <StatCard
+        label="在线房源"
+        value={formatNumber(listings.length)}
+        hint={`当前筛选 ${formatNumber(filtered.length)} 套`}
+      />
+      <StatCard
+        label="平均月租"
+        value={`¥${formatNumber(avgPrice)}`}
+        hint={`单价 ¥${avgPsm}/㎡·月`}
+      />
+      <StatCard label="近地铁占比" value={`${nearSubwayRate}%`} />
+      <StatCard label="已核验" value={`${verifiedRate}%`} />
+
+      <div className="col-span-2 rounded-xl border border-charcoal-100 bg-white p-3">
+        <div className="mb-1 text-xs text-charcoal-400">平台分布</div>
+        <div className="h-24">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={platformData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={28}
+                outerRadius={42}
+                paddingAngle={1}
+                stroke="none"
+              >
+                {platformData.map((d) => (
+                  <Cell key={d.key} fill={d.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(v: number, n: string) => [`${formatNumber(v)} 套`, n]}
+                contentStyle={{
+                  borderRadius: 8,
+                  border: '1px solid #E5E5EA',
+                  fontSize: 12,
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-charcoal-500">
+          {platformData.map((d) => (
+            <span key={d.key} className="inline-flex items-center gap-1">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: d.color }}
+              />
+              {d.name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="col-span-2 rounded-xl border border-charcoal-100 bg-white p-3 sm:col-span-2 lg:col-span-2">
+        <div className="mb-1 text-xs text-charcoal-400">区域分布</div>
+        <div className="h-24">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={districtData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 9, fill: '#8E8E93' }}
+                tickLine={false}
+                axisLine={false}
+                interval={0}
+              />
+              <YAxis hide />
+              <Tooltip
+                formatter={(v: number) => [`${formatNumber(v)} 套`, '房源数']}
+                cursor={{ fill: '#F5F5F7' }}
+                contentStyle={{
+                  borderRadius: 8,
+                  border: '1px solid #E5E5EA',
+                  fontSize: 12,
+                }}
+              />
+              <Bar dataKey="value" radius={[3, 3, 0, 0]} fill="#FF5516" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </section>
+  );
+}
