@@ -13,7 +13,7 @@ import {
   PLATFORM_LABELS,
   type HouseListing,
 } from '@/types/house';
-import { formatDistance, formatNumber } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 
 const TIANJIN_CENTER: [number, number] = [39.13, 117.2];
 const MAX_MARKERS = 400;
@@ -48,8 +48,9 @@ function UserLocationMarker({ location }: { location: UserLocation }) {
   );
 }
 
-export default function MapView() {
+export default function MapView({ className }: { className?: string }) {
   const filtered = useListingStore((s) => s.getFiltered());
+  const userLocation = useListingStore((s) => s.userLocation);
   const mapRef = useRef<HTMLDivElement>(null);
 
   const markers = useMemo(() => {
@@ -66,7 +67,10 @@ export default function MapView() {
   return (
     <div
       ref={mapRef}
-      className="relative h-[calc(100vh-23rem)] overflow-hidden rounded-xl border border-charcoal-100"
+      className={cn(
+        'relative h-[calc(100vh-23rem)] overflow-hidden rounded-xl border border-charcoal-100',
+        className,
+      )}
     >
       <MapContainer
         center={TIANJIN_CENTER}
@@ -80,6 +84,7 @@ export default function MapView() {
           url="https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}"
           subdomains={['1', '2', '3', '4']}
         />
+        {userLocation && <UserLocationMarker location={userLocation} />}
         {markers.map((l) => (
           <CircleMarker
             key={l.id}

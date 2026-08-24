@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutGrid, Map, Gauge } from 'lucide-react';
+import { LayoutGrid, Map, Columns2, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useListingStore } from '@/store/useListingStore';
 import Header from '@/components/Header';
@@ -8,12 +8,19 @@ import StatsBar from '@/components/StatsBar';
 import ListingList from '@/components/ListingList';
 import MapView from '@/components/MapView';
 
-type View = 'list' | 'map';
+/** split = 初始页同屏（列表 + 地图板块） */
+type View = 'split' | 'list' | 'map';
 
 const COUNT_OPTIONS = [600, 1200, 3000, 6000, 10000, 20000, 50000];
 
+const VIEW_TABS: { key: View; label: string; icon: React.ReactNode }[] = [
+  { key: 'split', label: '同屏', icon: <Columns2 size={14} /> },
+  { key: 'list', label: '列表', icon: <LayoutGrid size={14} /> },
+  { key: 'map', label: '地图', icon: <Map size={14} /> },
+];
+
 export default function HomePage() {
-  const [view, setView] = useState<View>('list');
+  const [view, setView] = useState<View>('split');
   const { totalCount, setTotalCount } = useListingStore();
 
   return (
@@ -59,30 +66,21 @@ export default function HomePage() {
           </div>
 
           <div className="inline-flex rounded-full border border-charcoal-200 p-0.5">
-            <button
-              type="button"
-              onClick={() => setView('list')}
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm transition-colors',
-                view === 'list'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-charcoal-600 hover:bg-charcoal-50',
-              )}
-            >
-              <LayoutGrid size={14} /> 列表
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('map')}
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm transition-colors',
-                view === 'map'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-charcoal-600 hover:bg-charcoal-50',
-              )}
-            >
-              <Map size={14} /> 地图
-            </button>
+            {VIEW_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setView(t.key)}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm transition-colors',
+                  view === t.key
+                    ? 'bg-brand-500 text-white'
+                    : 'text-charcoal-600 hover:bg-charcoal-50',
+                )}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -91,7 +89,21 @@ export default function HomePage() {
         </div>
 
         <div className="mt-3">
-          {view === 'list' ? <ListingList /> : <MapView />}
+          {view === 'split' ? (
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+              {/* 移动端地图在上，桌面端地图固定右侧 */}
+              <div className="order-1 lg:order-2 lg:sticky lg:top-20 lg:self-start">
+                <MapView className="h-64 sm:h-72 lg:h-[calc(100vh-23rem)]" />
+              </div>
+              <div className="order-2 lg:order-1">
+                <ListingList />
+              </div>
+            </div>
+          ) : view === 'list' ? (
+            <ListingList />
+          ) : (
+            <MapView />
+          )}
         </div>
       </main>
 

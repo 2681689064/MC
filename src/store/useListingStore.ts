@@ -35,6 +35,7 @@ export interface Filters {
   decoration: Decoration | '';
   nearSubwayOnly: boolean;
   verifiedOnly: boolean;
+  nearbyRadiusKm: number; // 附近搜索半径（公里），0 = 关闭
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -48,6 +49,7 @@ export const DEFAULT_FILTERS: Filters = {
   decoration: '',
   nearSubwayOnly: false,
   verifiedOnly: false,
+  nearbyRadiusKm: 0,
 };
 
 interface ListingState {
@@ -68,6 +70,8 @@ interface ListingState {
   setPageSize: (n: number) => void;
   /** 请求浏览器定位；成功返回位置，失败返回 null */
   requestLocation: () => Promise<UserLocation | null>;
+  /** 定位失败时的降级：使用天津市中心模拟位置（标注为模拟） */
+  setMockLocation: () => void;
   getFiltered: () => HouseListing[];
 }
 
@@ -83,13 +87,20 @@ function signature(filters: Filters, sort: SortKey, ids: string): string {
     filters.decoration,
     filters.nearSubwayOnly ? 1 : 0,
     filters.verifiedOnly ? 1 : 0,
+    filters.nearbyRadiusKm,
     sort,
     ids,
   ].join('|');
 }
 
-export function applyFilters(listings: HouseListing[], filters: Filters): HouseListing[] {
+export function applyFilters(
+  listings: HouseListing[],
+  filters: Filters,
+  userLocation?: UserLocation | null,
+): HouseListing[] {
   const kw = filters.keyword.trim().toLowerCase();
+  const nearbyRadiusM =
+    filters.nearbyRadiusKm > 0 && userLocation ? filters.nearbyRadiusKm * 1000 : 0;
   const result: HouseListing[] = [];
   for (const l of listings) {
     if (filters.district && l.district !== filters.district) continue;
@@ -100,6 +111,10 @@ export function applyFilters(listings: HouseListing[], filters: Filters): HouseL
     if (filters.decoration && l.decoration !== filters.decoration) continue;
     if (filters.nearSubwayOnly && !l.nearSubway) continue;
     if (filters.verifiedOnly && !l.isVerified) continue;
+    if (nearbyRadiusM > 0) {
+      if (distanceMeters(userLocation!.lng, userLocation!.lat, l.lng, l.lat) > nearbyRadiusM)
+        continue;
+    }
     if (kw) {
       const hay = `${l.title} ${l.community} ${l.district} ${l.area} ${l.subwayStation}`.toLowerCase();
       if (!hay.includes(kw)) continue;
@@ -126,7 +141,7 @@ export function applySort(
       return arr.sort(
         (a, b) => a.price / a.areaSize - b.price / b.areaSize,
       );
-    case 'distance-asc':
+    case 'distance-asc': {
       if (!userLocation) return arr; // 未定位时保持原序
       const { lng, lat } = userLocation;
       // 预计算距离缓存，避免 sort 比较器内重复 haversine
@@ -140,6 +155,7 @@ export function applySort(
         return d;
       };
       return arr.sort((a, b) => dist(a) - dist(b));
+    }
     case 'newest':
     default:
       return arr.sort((a, b) => b.publishedAt - a.publishedAt);
@@ -202,15 +218,28 @@ export const useListingStore = create<ListingState>((set, get) => ({
     }
   },
 
+  setMockLocation: () => {
+    // 天津市中心（和平区附近），精度按市级 IP 定位近似 5km
+    set({
+      userLocation: { lng: 117.2145, lat: 39.1171, accuracy: 5000 },
+      locationStatus: 'ok',
+      _sig: '',
+    });
+  },
+
   getFiltered: () => {
     const { listings, filters, sort, userLocation, _sig, _filtered } = get();
     const sig =
       signature(filters, sort, `${listings.length}:${listings[0]?.id ?? ''}`) +
-      (sort === 'distance-asc' && userLocation
+      (userLocation && (filters.nearbyRadiusKm > 0 || sort === 'distance-asc')
         ? `@${userLocation.lng.toFixed(5)},${userLocation.lat.toFixed(5)}`
         : '');
     if (sig === _sig) return _filtered;
-    const filtered = applySort(applyFilters(listings, filters), sort, userLocation);
+    const filtered = applySort(
+      applyFilters(listings, filters, userLocation),
+      sort,
+      userLocation,
+    );
     set({ _sig: sig, _filtered: filtered });
     return filtered;
   },

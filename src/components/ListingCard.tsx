@@ -1,8 +1,9 @@
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { BadgeCheck, MapPin, Train, Maximize, Layers, Compass } from 'lucide-react';
-import { formatNumber, timeAgo } from '@/lib/utils';
+import { formatDistance, formatNumber, distanceMeters, timeAgo } from '@/lib/utils';
 import { houseImageUrl } from '@/lib/houseImage';
+import { useListingStore } from '@/store/useListingStore';
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
@@ -13,6 +14,10 @@ import {
 function ListingCardImpl({ listing }: { listing: HouseListing }) {
   const platformColor = PLATFORM_COLORS[listing.platform];
   const isPersonal = listing.platform === 'personal';
+  const userLocation = useListingStore((s) => s.userLocation);
+  const dist = userLocation
+    ? distanceMeters(userLocation.lng, userLocation.lat, listing.lng, listing.lat)
+    : null;
 
   return (
     <Link
@@ -80,6 +85,11 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
         </div>
 
         <div className="mt-1.5 flex items-center gap-1 text-[11px] text-charcoal-400">
+          {dist !== null && (
+            <span className="mr-1 rounded bg-blue-50 px-1.5 py-0.5 font-medium text-blue-600">
+              距您 {formatDistance(dist)}
+            </span>
+          )}
           {listing.nearSubway ? (
             <>
               <Train size={11} className="text-mint-600" />

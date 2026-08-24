@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { DISTRICTS } from '@/data/tianjin';
 import { cn, formatNumber } from '@/lib/utils';
+import LocationControl from './LocationControl';
 import {
   DEFAULT_FILTERS,
   SORT_OPTIONS,
@@ -27,6 +28,7 @@ const PLATFORMS: Platform[] = [
 ];
 const RENT_TYPES: RentType[] = ['whole', 'shared', 'apartment'];
 const ROOM_OPTIONS = [0, 1, 2, 3, 4];
+const NEARBY_OPTIONS = [0, 1, 3, 5, 10];
 const PRICE_PRESETS = [
   { label: '全部', min: 0, max: 20000 },
   { label: '≤1500', min: 0, max: 1500 },
@@ -65,6 +67,7 @@ export default function FilterBar() {
   const { filters, setFilters, resetFilters, sort, setSort, totalCount } =
     useListingStore();
   const filtered = useListingStore((s) => s.getFiltered());
+  const userLocation = useListingStore((s) => s.userLocation);
 
   const districtOptions = useMemo(() => ['', ...DISTRICTS.map((d) => d.name)], []);
 
@@ -85,7 +88,7 @@ export default function FilterBar() {
             className="w-full rounded-xl border border-charcoal-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SlidersHorizontal
             size={16}
             className="text-charcoal-400"
@@ -102,6 +105,7 @@ export default function FilterBar() {
               </option>
             ))}
           </select>
+          <LocationControl compact />
           <button
             type="button"
             onClick={resetFilters}
@@ -112,6 +116,28 @@ export default function FilterBar() {
           </button>
         </div>
       </div>
+
+      {/* 附近搜索：定位成功后显示 */}
+      {userLocation && (
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2">
+          <span className="mr-1 text-xs font-medium text-blue-500">附近找房</span>
+          {NEARBY_OPTIONS.map((km) => (
+            <Chip
+              key={km}
+              active={filters.nearbyRadiusKm === km}
+              onClick={() => {
+                setFilters({ nearbyRadiusKm: km });
+                if (km > 0) setSort('distance-asc');
+              }}
+            >
+              {km === 0 ? '不限' : `${km}km`}
+            </Chip>
+          ))}
+          <span className="text-xs text-charcoal-400">
+            以您的位置为圆心（经纬度 {userLocation.lng.toFixed(3)}, {userLocation.lat.toFixed(3)}）
+          </span>
+        </div>
+      )}
 
       {/* 筛选行 */}
       <div className="flex flex-wrap items-center gap-1.5">

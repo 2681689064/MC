@@ -7,7 +7,8 @@ import { useListingStore } from '@/store/useListingStore';
  * 定位成功后可使用"距我最近"排序与地图个人位置标记。
  */
 export default function LocationControl({ compact = false }: { compact?: boolean }) {
-  const { locationStatus, userLocation, requestLocation } = useListingStore();
+  const { locationStatus, userLocation, requestLocation, setMockLocation } =
+    useListingStore();
 
   const handleLocate = async () => {
     await requestLocation();
@@ -26,7 +27,9 @@ export default function LocationControl({ compact = false }: { compact?: boolean
     },
     ok: {
       icon: <LocateFixed size={compact ? 14 : 16} />,
-      label: userLocation ? `已定位 · ±${Math.round(userLocation.accuracy)}m` : '已定位',
+      label: userLocation
+        ? `已定位 · ±${Math.round(userLocation.accuracy)}m${userLocation.accuracy >= 5000 ? '（模拟）' : ''}`
+        : '已定位',
       cls: 'border-mint-200 bg-mint-50 text-mint-700',
     },
     error: {
@@ -37,19 +40,32 @@ export default function LocationControl({ compact = false }: { compact?: boolean
   }[locationStatus];
 
   return (
-    <button
-      type="button"
-      onClick={handleLocate}
-      disabled={locationStatus === 'locating'}
-      title="使用浏览器定位，支持按距离找房与地图展示我的位置"
-      className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors',
-        compact ? 'py-1.5' : 'py-2.5',
-        config.cls,
+    <span className="inline-flex shrink-0 items-center gap-1.5">
+      <button
+        type="button"
+        onClick={handleLocate}
+        disabled={locationStatus === 'locating'}
+        title="使用浏览器定位，支持附近找房与地图展示我的位置"
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors',
+          compact ? 'py-1.5' : 'py-2.5',
+          config.cls,
+        )}
+      >
+        {config.icon}
+        <span className="whitespace-nowrap">{config.label}</span>
+      </button>
+      {locationStatus === 'error' && (
+        <button
+          type="button"
+          onClick={setMockLocation}
+          title="浏览器定位不可用时，使用天津市中心位置体验附近找房"
+          className="inline-flex items-center gap-1 rounded-xl border border-dashed border-blue-300 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
+        >
+          <LocateFixed size={12} />
+          改用模拟位置
+        </button>
       )}
-    >
-      {config.icon}
-      <span className="whitespace-nowrap">{config.label}</span>
-    </button>
+    </span>
   );
 }
