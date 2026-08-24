@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { LayoutGrid, Map, Columns2, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useListingStore } from '@/store/useListingStore';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
-import StatsBar from '@/components/StatsBar';
 import ListingList from '@/components/ListingList';
 import MapView from '@/components/MapView';
+
+// 图表库较大（recharts chunk ~110KB gzip），懒加载不阻塞首屏渲染
+const StatsBar = lazy(() => import('@/components/StatsBar'));
 
 /** split = 初始页同屏（列表 + 地图板块） */
 type View = 'split' | 'list' | 'map';
@@ -28,7 +30,13 @@ export default function HomePage() {
       <Header />
 
       <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-        <StatsBar />
+        <Suspense
+          fallback={
+            <div className="h-24 animate-pulse rounded-xl border border-charcoal-100 bg-white" />
+          }
+        >
+          <StatsBar />
+        </Suspense>
 
         {/* 房源数量控制 + 视图切换 */}
         <div className="mt-3 flex flex-col gap-2 rounded-xl border border-charcoal-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">

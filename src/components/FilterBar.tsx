@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { DISTRICTS } from '@/data/tianjin';
 import { cn, formatNumber } from '@/lib/utils';
@@ -71,6 +71,15 @@ export default function FilterBar() {
 
   const districtOptions = useMemo(() => ['', ...DISTRICTS.map((d) => d.name)], []);
 
+  // 搜索防抖：本地即时回显，200ms 后才触发全量过滤（避免每个按键都重跑过滤+图表重绘）
+  const [keywordDraft, setKeywordDraft] = useState(filters.keyword);
+  useEffect(() => setKeywordDraft(filters.keyword), [filters.keyword]);
+  useEffect(() => {
+    if (keywordDraft === filters.keyword) return;
+    const t = setTimeout(() => setFilters({ keyword: keywordDraft }), 200);
+    return () => clearTimeout(t);
+  }, [keywordDraft, filters.keyword, setFilters]);
+
   return (
     <section className="space-y-3">
       {/* 搜索 + 排序 */}
@@ -82,8 +91,8 @@ export default function FilterBar() {
           />
           <input
             type="text"
-            value={filters.keyword}
-            onChange={(e) => setFilters({ keyword: e.target.value })}
+            value={keywordDraft}
+            onChange={(e) => setKeywordDraft(e.target.value)}
             placeholder="搜索小区 / 板块 / 地铁站 / 标题"
             className="w-full rounded-xl border border-charcoal-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
