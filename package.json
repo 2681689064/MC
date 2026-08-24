@@ -5,6 +5,7 @@
   "type": "module",
   "description": "天津租房聚合平台 - 汇聚多家平台房源，支持个人房东直租",
   "scripts": {
+    "start": "sh start.sh",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
