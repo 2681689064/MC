@@ -20,3 +20,14 @@ export function formatPriceRange(min: number, max: number): string {
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
+
+/** 相对发布时间：今天/昨天/N天前/N周前/N月前 */
+export function timeAgo(ts: number): string {
+  const day = 86400000;
+  const d = Math.floor((Date.now() - ts) / day);
+  if (d <= 0) return '今天';
+  if (d === 1) return '昨天';
+  if (d < 7) return `${d}天前`;
+  if (d < 30) return `${Math.floor(d / 7)}周前`;
+  return `${Math.floor(d / 30)}月前`;
+}

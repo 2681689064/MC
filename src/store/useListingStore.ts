@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { clamp } from '@/lib/utils';
 import {
   DEFAULT_LISTING_COUNT,
-  generateListings,
   getListings,
+  MAX_LISTING_COUNT,
 } from '@/data/generateListings';
 import type { Decoration, HouseListing, Platform, RentType } from '@/types/house';
 
@@ -74,7 +74,7 @@ function signature(filters: Filters, sort: SortKey, ids: string): string {
   ].join('|');
 }
 
-function applyFilters(listings: HouseListing[], filters: Filters): HouseListing[] {
+export function applyFilters(listings: HouseListing[], filters: Filters): HouseListing[] {
   const kw = filters.keyword.trim().toLowerCase();
   const result: HouseListing[] = [];
   for (const l of listings) {
@@ -95,7 +95,7 @@ function applyFilters(listings: HouseListing[], filters: Filters): HouseListing[
   return result;
 }
 
-function applySort(listings: HouseListing[], sort: SortKey): HouseListing[] {
+export function applySort(listings: HouseListing[], sort: SortKey): HouseListing[] {
   const arr = listings.slice();
   switch (sort) {
     case 'price-asc':
@@ -118,13 +118,15 @@ export const useListingStore = create<ListingState>((set, get) => ({
   totalCount: DEFAULT_LISTING_COUNT,
   listings: getListings(DEFAULT_LISTING_COUNT),
   filters: { ...DEFAULT_FILTERS },
-  sort: 'newest',
+  sort: 'price-asc', // 低价房源优先展示
   pageSize: 30,
   _sig: '',
   _filtered: [],
 
   setTotalCount: (n) => {
-    const clamped = clamp(Math.round(n), 100, 20000);
+    // 输入框可能给出 NaN（如清空/非法字符），回退到默认规模
+    const safe = Number.isFinite(n) ? Math.round(n) : DEFAULT_LISTING_COUNT;
+    const clamped = clamp(safe, 100, MAX_LISTING_COUNT);
     const listings = getListings(clamped);
     set({
       totalCount: clamped,
@@ -149,13 +151,11 @@ export const useListingStore = create<ListingState>((set, get) => ({
   },
 }));
 
-// 暴露生成器便于重新种子化（不进 store，避免热更新时重新生成）
-export const regenerateWithSeed = (count: number, seed: number) => {
-  const data = generateListings({ count, seed });
-  useListingStore.setState({
-    totalCount: count,
-    listings: data,
-    _sig: '',
-    _filtered: [],
-  });
-};
+// 排序下拉的展示顺序（低价优先置顶，与默认排序一致）
+export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'price-asc', label: '租金 低→高（低价优先）' },
+  { key: 'newest', label: '最新发布' },
+  { key: 'price-desc', label: '租金 高→低' },
+  { key: 'area-desc', label: '面积 大→小' },
+  { key: 'price-per-sqm-asc', label: '单价 低→高' },
+];

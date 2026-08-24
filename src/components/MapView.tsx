@@ -42,9 +42,11 @@ export default function MapView() {
         scrollWheelZoom={false}
         className="h-full w-full"
       >
+        {/* 高德瓦片：境内加载快且稳定（OSM 在部分网络环境不可达） */}
         <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; 高德地图'
+          url="https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}"
+          subdomains={['1', '2', '3', '4']}
         />
         {markers.map((l) => (
           <CircleMarker

@@ -181,8 +181,30 @@ interface GenerateOptions {
   seed?: number;
 }
 
+// 各平台天津租房页（链家/贝壳支持 rs 关键词搜索路径）
+const PLATFORM_BASE_URL: Record<Platform, string> = {
+  lianjia: 'https://tj.lianjia.com/zufang/',
+  beike: 'https://tj.zu.ke.com/zufang/',
+  anjuke: 'https://tj.zu.anjuke.com/',
+  '58': 'https://tj.58.com/chuzu/',
+  ziroom: 'https://www.ziroom.com/',
+  personal: '', // 个人房东直租无外链，走站内详情页
+};
+
+/** 房源来源跳转链接：跳到对应平台的搜索页，可真实访问 */
+function buildSourceUrl(platform: Platform, community: string): string {
+  switch (platform) {
+    case 'lianjia':
+      return `${PLATFORM_BASE_URL.lianjia}rs${encodeURIComponent(community)}/`;
+    case 'beike':
+      return `${PLATFORM_BASE_URL.beike}rs${encodeURIComponent(community)}/`;
+    default:
+      return PLATFORM_BASE_URL[platform];
+  }
+}
+
 /**
- * 生成房源数据集。默认 1200 条，可任意扩到上万。
+ * 生成房源数据集。默认 1200 条，上限 50000 条。
  * 通过确定性 PRNG + 权重分布保证结果稳定且贴近真实天津市场。
  */
 export function generateListings({ count, seed = 20260824 }: GenerateOptions): HouseListing[] {
@@ -303,21 +325,36 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
       publishedAt,
       isVerified: rand() < 0.78,
       landlord: pick(rand, LANDLORD_NAMES),
-      sourceUrl: '#',
+      sourceUrl: buildSourceUrl(platform, community),
     };
   }
 
   return listings;
 }
 
-// 默认数据集（1200 条），按需切换
+// 默认数据集（1200 条），上限 50000 条
 const DEFAULT_COUNT = 1200;
-let cache: { count: number; data: HouseListing[] } | null = null;
+export const MAX_LISTING_COUNT = 50000;
+
+// 多规模 LRU 缓存（最多 4 份），在数量预设间来回切换时秒开
+const listingCache = new Map<number, HouseListing[]>();
+const CACHE_MAX_ENTRIES = 4;
 
 export function getListings(count: number = DEFAULT_COUNT): HouseListing[] {
-  if (cache && cache.count === count) return cache.data;
+  const hit = listingCache.get(count);
+  if (hit) {
+    // 重新插入以刷新 LRU 顺序
+    listingCache.delete(count);
+    listingCache.set(count, hit);
+    return hit;
+  }
   const data = generateListings({ count });
-  cache = { count, data };
+  listingCache.set(count, data);
+  while (listingCache.size > CACHE_MAX_ENTRIES) {
+    const oldest = listingCache.keys().next().value;
+    if (oldest === undefined) break;
+    listingCache.delete(oldest);
+  }
   return data;
 }
 

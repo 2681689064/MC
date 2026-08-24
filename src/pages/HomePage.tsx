@@ -10,7 +10,7 @@ import MapView from '@/components/MapView';
 
 type View = 'list' | 'map';
 
-const COUNT_OPTIONS = [600, 1200, 3000, 6000, 10000];
+const COUNT_OPTIONS = [600, 1200, 3000, 6000, 10000, 20000, 50000];
 
 export default function HomePage() {
   const [view, setView] = useState<View>('list');
@@ -48,14 +48,14 @@ export default function HomePage() {
             <input
               type="number"
               min={100}
-              max={20000}
+              max={50000}
               step={100}
               value={totalCount}
               onChange={(e) => setTotalCount(Number(e.target.value))}
               className="w-24 rounded-full border border-charcoal-200 px-3 py-1 text-sm outline-none focus:border-brand-400"
               aria-label="自定义房源数量"
             />
-            <span className="text-xs text-charcoal-400">套（100-20000）</span>
+            <span className="text-xs text-charcoal-400">套（100-50000）</span>
           </div>
 
           <div className="inline-flex rounded-full border border-charcoal-200 p-0.5">

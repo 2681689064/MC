@@ -1,6 +1,8 @@
 import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import { BadgeCheck, MapPin, Train, Maximize, Layers, Compass } from 'lucide-react';
-import { cn, formatNumber } from '@/lib/utils';
+import { formatNumber, timeAgo } from '@/lib/utils';
+import { houseImageUrl } from '@/lib/houseImage';
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
@@ -8,43 +10,19 @@ import {
   type HouseListing,
 } from '@/types/house';
 
-const DECO_PROMPT: Record<string, string> = {
-  毛坯: 'empty raw concrete apartment room, bright daylight, no furniture, minimalist',
-  简装: 'simple furnished apartment living room, white walls, basic sofa, daylight',
-  精装: 'modern cozy apartment living room, warm wood floor, sofa, plants, bright',
-  豪装: 'luxury apartment living room, designer furniture, marble floor, golden light',
-};
-
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const day = 86400000;
-  const d = Math.floor(diff / day);
-  if (d <= 0) return '今天';
-  if (d === 1) return '昨天';
-  if (d < 7) return `${d}天前`;
-  if (d < 30) return `${Math.floor(d / 7)}周前`;
-  return `${Math.floor(d / 30)}月前`;
-}
-
-function imageUrl(l: HouseListing): string {
-  const prompt = encodeURIComponent(
-    `Real estate listing photo, ${DECO_PROMPT[l.decoration]}, ${
-      l.rentType === 'shared' ? 'single bedroom' : 'living room'
-    }, ${l.areaSize} sqm, photorealistic, interior design`,
-  );
-  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=landscape_4_3`;
-}
-
 function ListingCardImpl({ listing }: { listing: HouseListing }) {
   const platformColor = PLATFORM_COLORS[listing.platform];
   const isPersonal = listing.platform === 'personal';
 
   return (
-    <article className="group flex gap-3 rounded-xl border border-charcoal-100 bg-white p-2.5 transition-all hover:border-brand-200 hover:shadow-md sm:gap-4 sm:p-3">
+    <Link
+      to={`/listing/${listing.id}`}
+      className="group flex gap-3 rounded-xl border border-charcoal-100 bg-white p-2.5 transition-all hover:border-brand-200 hover:shadow-md sm:gap-4 sm:p-3"
+    >
       {/* 图片 */}
       <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-charcoal-100 sm:h-28 sm:w-40">
         <img
-          src={imageUrl(listing)}
+          src={houseImageUrl(listing)}
           alt={listing.title}
           loading="lazy"
           decoding="async"
@@ -121,12 +99,12 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
             </span>
             <span className="text-xs text-charcoal-400">/月</span>
           </div>
-          <span className="text-[11px] text-charcoal-400">
-            {isPersonal ? '房东直租' : listing.landlord} · {timeAgo(listing.publishedAt)}
+          <span className="text-[11px] text-charcoal-400 transition-colors group-hover:text-brand-500">
+            {isPersonal ? '房东直租' : listing.landlord} · {timeAgo(listing.publishedAt)} · 查看详情 →
           </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
 

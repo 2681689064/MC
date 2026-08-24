@@ -4,6 +4,7 @@ import { DISTRICTS } from '@/data/tianjin';
 import { cn, formatNumber } from '@/lib/utils';
 import {
   DEFAULT_FILTERS,
+  SORT_OPTIONS,
   useListingStore,
   type SortKey,
 } from '@/store/useListingStore';
@@ -14,14 +15,6 @@ import {
   type Platform,
   type RentType,
 } from '@/types/house';
-
-const SORT_LABELS: Record<SortKey, string> = {
-  newest: '最新发布',
-  'price-asc': '租金 低→高',
-  'price-desc': '租金 高→低',
-  'area-desc': '面积 大→小',
-  'price-per-sqm-asc': '单价 低→高',
-};
 
 const DECORATIONS: Decoration[] = ['毛坯', '简装', '精装', '豪装'];
 const PLATFORMS: Platform[] = [
@@ -103,9 +96,9 @@ export default function FilterBar() {
             onChange={(e) => setSort(e.target.value as SortKey)}
             className="rounded-xl border border-charcoal-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-400"
           >
-            {Object.entries(SORT_LABELS).map(([v, label]) => (
-              <option key={v} value={v}>
-                {label}
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
               </option>
             ))}
           </select>
