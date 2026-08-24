@@ -1,20 +1,52 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
+  Circle,
   CircleMarker,
   MapContainer,
   Popup,
   TileLayer,
+  useMap,
 } from 'react-leaflet';
-import { useListingStore } from '@/store/useListingStore';
+import { useListingStore, type UserLocation } from '@/store/useListingStore';
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
   type HouseListing,
 } from '@/types/house';
-import { formatNumber } from '@/lib/utils';
+import { formatDistance, formatNumber } from '@/lib/utils';
 
 const TIANJIN_CENTER: [number, number] = [39.13, 117.2];
 const MAX_MARKERS = 400;
+
+/** 定位成功后自动平移到用户位置 */
+function FlyToUser({ location }: { location: UserLocation }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([location.lat, location.lng], 13, { duration: 1.2 });
+  }, [location, map]);
+  return null;
+}
+
+/** 用户位置标记：精度圈 + 中心点 */
+function UserLocationMarker({ location }: { location: UserLocation }) {
+  return (
+    <>
+      <Circle
+        center={[location.lat, location.lng]}
+        radius={location.accuracy}
+        pathOptions={{ color: '#2563EB', weight: 1, fillColor: '#2563EB', fillOpacity: 0.08 }}
+      />
+      <CircleMarker
+        center={[location.lat, location.lng]}
+        radius={7}
+        pathOptions={{ color: '#fff', weight: 3, fillColor: '#2563EB', fillOpacity: 1 }}
+      >
+        <Popup>我的位置 · 精度 ±{Math.round(location.accuracy)}m</Popup>
+      </CircleMarker>
+      <FlyToUser location={location} />
+    </>
+  );
+}
 
 export default function MapView() {
   const filtered = useListingStore((s) => s.getFiltered());

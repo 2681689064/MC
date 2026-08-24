@@ -188,10 +188,11 @@ const PLATFORM_BASE_URL: Record<Platform, string> = {
   anjuke: 'https://tj.zu.anjuke.com/',
   '58': 'https://tj.58.com/chuzu/',
   ziroom: 'https://www.ziroom.com/',
-  personal: '', // 个人房东直租无外链，走站内详情页
+  // 个人房东直租：跳转 58 同城天津个人房源栏目（真实可访问）
+  personal: 'https://tj.58.com/gr/chuzu/',
 };
 
-/** 房源来源跳转链接：跳到对应平台的搜索页，可真实访问 */
+/** 房源来源跳转链接：跳到对应平台的搜索/栏目页，均可真实访问 */
 function buildSourceUrl(platform: Platform, community: string): string {
   switch (platform) {
     case 'lianjia':
@@ -204,7 +205,7 @@ function buildSourceUrl(platform: Platform, community: string): string {
 }
 
 /**
- * 生成房源数据集。默认 1200 条，上限 50000 条。
+ * 生成房源数据集。默认 10000 条，上限 50000 条。
  * 通过确定性 PRNG + 权重分布保证结果稳定且贴近真实天津市场。
  */
 export function generateListings({ count, seed = 20260824 }: GenerateOptions): HouseListing[] {
@@ -332,8 +333,8 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
   return listings;
 }
 
-// 默认数据集（1200 条），上限 50000 条
-const DEFAULT_COUNT = 1200;
+// 默认数据集（10,000 条），上限 50000 条
+const DEFAULT_COUNT = 10000;
 export const MAX_LISTING_COUNT = 50000;
 
 // 多规模 LRU 缓存（最多 4 份），在数量预设间来回切换时秒开
