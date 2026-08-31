@@ -61,7 +61,11 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
           （用 button + window.open，避免 <a> 嵌套在卡片 <a> 内的无效 DOM 结构） */}
       <button
         type="button"
-        title={`在${PLATFORM_LABELS[listing.platform]}中查看该小区房源`}
+        title={
+          listing.platform === 'ziroom'
+            ? '自如域名受限，该小区在租房源在贝壳同步展示'
+            : `在${PLATFORM_LABELS[listing.platform]}中查看该小区房源`
+        }
         onClick={(e) => {
           // 阻止冒泡到卡片的站内路由跳转，新窗口打开平台链接
           e.stopPropagation();

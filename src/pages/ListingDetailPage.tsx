@@ -152,7 +152,9 @@ export default function ListingDetailPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600"
               >
-                前往{PLATFORM_LABELS[listing.platform]}查看原房源
+                {listing.platform === 'ziroom'
+                  ? '自如房源同步展示于贝壳，点击查看'
+                  : `前往${PLATFORM_LABELS[listing.platform]}查看原房源`}
                 <ExternalLink size={14} />
               </a>
             ) : (

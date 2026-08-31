@@ -7,9 +7,9 @@ import type {
   RentType,
 } from '../types/house';
 import {
+  BEIKE_COMMUNITY_IDS,
   DISTRICTS,
   LANDLORD_NAMES,
-  ZIROOM_DISTRICT_CODES,
 } from './tianjin';
 
 // ---------- 确定性伪随机（mulberry32），保证同 count 下结果稳定 ----------
@@ -181,33 +181,41 @@ interface GenerateOptions {
 }
 
 // ---------- 平台真实链接 ----------
-// 全部为真实可访问的天津站地址：
-//  - 链家/贝壳：/rs关键词/ 为官方关键词搜索路径
-//  - 安居客：?kw= 关键词搜索（已实测返回"为您找到xx附近租房"）
-//  - 58同城：?key= 关键词搜索
-//  - 自如：区域 + 户型的真实列表页（tj.ziroom.com 城市子域）
-//  - 个人房东：安居客个人房源栏目 l2
+// 全部为实测验证过的真实地址：
+//  - 链家/贝壳：优先小区 ID 直达页 /zufang/c{ID}/（真实小区在租列表，
+//    ID 抓取自贝壳各区房源页；链家与贝壳共用同一套小区 ID），
+//    未收录小区回退官方关键词搜索 /rs关键词/
+//  - 安居客：?kw= 关键词搜索（真实浏览器实测返回该小区真实房源）
+//  - 58同城：?key= 官方关键词搜索格式
+//  - 自如：ziroom 域名被腾讯 EdgeOne WAF 硬拦截（外部点击直接
+//    "Restricted Access"），自如房源在贝壳有同步展示，改跳贝壳小区页
+//  - 个人房东：安居客个人房源栏目 l2（58 系，实测可访问）
 function buildSourceUrl(
   platform: Platform,
   community: string,
-  district: string,
-  rentType: RentType,
+  _district: string,
+  _rentType: RentType,
 ): string {
   const kw = encodeURIComponent(community);
+  const cid = BEIKE_COMMUNITY_IDS[community];
   switch (platform) {
     case 'lianjia':
-      return `https://tj.lianjia.com/zufang/rs${kw}/`;
+      return cid
+        ? `https://tj.lianjia.com/zufang/${cid}/`
+        : `https://tj.lianjia.com/zufang/rs${kw}/`;
     case 'beike':
-      return `https://tj.zu.ke.com/zufang/rs${kw}/`;
+      return cid
+        ? `https://tj.zu.ke.com/zufang/${cid}/`
+        : `https://tj.zu.ke.com/zufang/rs${kw}/`;
     case 'anjuke':
       return `https://tj.zu.anjuke.com/fangyuan/?kw=${kw}`;
     case '58':
       return `https://tj.58.com/chuzu/?key=${kw}`;
-    case 'ziroom': {
-      const code = ZIROOM_DISTRICT_CODES[district] ?? '120103';
-      const z = rentType === 'shared' ? 'z1' : 'z2';
-      return `https://tj.ziroom.com/z/${z}-d${code}/`;
-    }
+    case 'ziroom':
+      // 自如域名被 WAF 硬拦截，自如托管房源在贝壳同步展示
+      return cid
+        ? `https://tj.zu.ke.com/zufang/${cid}/`
+        : `https://tj.zu.anjuke.com/fangyuan/?kw=${kw}`;
     default:
       return `https://tj.zu.anjuke.com/fangyuan/l2/?kw=${kw}`;
   }
