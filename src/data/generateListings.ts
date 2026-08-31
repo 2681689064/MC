@@ -189,7 +189,8 @@ interface GenerateOptions {
 //  - 58同城：?key= 官方关键词搜索格式
 //  - 自如：ziroom 域名被腾讯 EdgeOne WAF 硬拦截（外部点击直接
 //    "Restricted Access"），自如房源在贝壳有同步展示，改跳贝壳小区页
-//  - 个人房东：安居客个人房源栏目 l2（58 系，实测可访问）
+//  - 个人房东：安居客关键词搜索（l2 个人房源栏目实测会触发 58 系
+//    反爬验证码，改用与普通搜索一致的、实测点击可正常打开的路径）
 function buildSourceUrl(
   platform: Platform,
   community: string,
@@ -217,7 +218,7 @@ function buildSourceUrl(
         ? `https://tj.zu.ke.com/zufang/${cid}/`
         : `https://tj.zu.anjuke.com/fangyuan/?kw=${kw}`;
     default:
-      return `https://tj.zu.anjuke.com/fangyuan/l2/?kw=${kw}`;
+      return `https://tj.zu.anjuke.com/fangyuan/?kw=${kw}`;
   }
 }
 

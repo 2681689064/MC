@@ -67,8 +67,11 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
             : `在${PLATFORM_LABELS[listing.platform]}中查看该小区房源`
         }
         onClick={(e) => {
-          // 阻止冒泡到卡片的站内路由跳转，新窗口打开平台链接
+          // stopPropagation 阻断 React 合成事件冒泡到卡片 Link 的 onClick；
+          // preventDefault 阻止浏览器原生"跟随 anchor 跳转"的默认行为
+          // （button 嵌在 <Link> 渲染的 <a> 内，二者缺一都会导致站内跳转）
           e.stopPropagation();
+          e.preventDefault();
           window.open(listing.sourceUrl, '_blank', 'noopener,noreferrer');
         }}
         className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-lg border border-charcoal-200/80 bg-white/95 px-2 py-1 text-[11px] font-medium text-charcoal-500 opacity-0 shadow-sm backdrop-blur-sm transition-all hover:border-brand-300 hover:text-brand-600 focus:opacity-100 group-hover:opacity-100"
