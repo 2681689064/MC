@@ -1,6 +1,14 @@
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, MapPin, Train, Maximize, Layers, Compass } from 'lucide-react';
+import {
+  BadgeCheck,
+  MapPin,
+  Train,
+  Maximize,
+  Layers,
+  Compass,
+  ExternalLink,
+} from 'lucide-react';
 import { formatDistance, formatNumber, distanceMeters, timeAgo } from '@/lib/utils';
 import { houseImageUrl } from '@/lib/houseImage';
 import { useListingStore } from '@/store/useListingStore';
@@ -22,16 +30,16 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
   return (
     <Link
       to={`/listing/${listing.id}`}
-      className="group flex gap-3 rounded-xl border border-charcoal-100 bg-white p-2.5 transition-all hover:border-brand-200 hover:shadow-md sm:gap-4 sm:p-3"
+      className="group relative flex gap-3 rounded-2xl border border-charcoal-100 bg-white p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/10 sm:gap-4 sm:p-3"
     >
       {/* 图片 */}
-      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-charcoal-100 sm:h-28 sm:w-40">
+      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl bg-charcoal-100 sm:h-28 sm:w-40">
         <img
           src={houseImageUrl(listing)}
           alt={listing.title}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <span
           className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm"
@@ -39,15 +47,36 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
         >
           {PLATFORM_LABELS[listing.platform]}
         </span>
-        <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+        <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm">
           {listing.images} 图
         </span>
+        {isPersonal && (
+          <span className="absolute right-1.5 top-1.5 rounded-md bg-mint-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+            0 佣金
+          </span>
+        )}
       </div>
+
+      {/* 直达平台外链按钮：不跳站内详情，直接打开该房源所在平台
+          （用 button + window.open，避免 <a> 嵌套在卡片 <a> 内的无效 DOM 结构） */}
+      <button
+        type="button"
+        title={`在${PLATFORM_LABELS[listing.platform]}中查看该小区房源`}
+        onClick={(e) => {
+          // 阻止冒泡到卡片的站内路由跳转，新窗口打开平台链接
+          e.stopPropagation();
+          window.open(listing.sourceUrl, '_blank', 'noopener,noreferrer');
+        }}
+        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-lg border border-charcoal-200/80 bg-white/95 px-2 py-1 text-[11px] font-medium text-charcoal-500 opacity-0 shadow-sm backdrop-blur-sm transition-all hover:border-brand-300 hover:text-brand-600 focus:opacity-100 group-hover:opacity-100"
+      >
+        <ExternalLink size={12} />
+        平台直达
+      </button>
 
       {/* 内容 */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-sm font-medium text-charcoal-900">
+          <h3 className="line-clamp-1 text-sm font-medium text-charcoal-900 transition-colors group-hover:text-brand-600">
             {listing.title}
           </h3>
           {listing.isVerified && (
@@ -56,7 +85,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
         </div>
 
         <div className="mt-0.5 flex items-center gap-1 text-xs text-charcoal-500">
-          <MapPin size={11} className="text-charcoal-400" />
+          <MapPin size={11} className="shrink-0 text-charcoal-400" />
           <span className="line-clamp-1">
             {listing.community} · {listing.district} {listing.area}
           </span>

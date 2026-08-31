@@ -3,9 +3,11 @@ import { LayoutGrid, Map, Columns2, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useListingStore } from '@/store/useListingStore';
 import Header from '@/components/Header';
+import Hero from '@/components/Hero';
 import FilterBar from '@/components/FilterBar';
 import ListingList from '@/components/ListingList';
 import MapView from '@/components/MapView';
+import PageLoader from '@/components/PageLoader';
 
 // 图表库较大（recharts chunk ~110KB gzip），懒加载不阻塞首屏渲染
 const StatsBar = lazy(() => import('@/components/StatsBar'));
@@ -30,13 +32,14 @@ export default function HomePage() {
       <Header />
 
       <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-        <Suspense
-          fallback={
-            <div className="h-24 animate-pulse rounded-xl border border-charcoal-100 bg-white" />
-          }
-        >
-          <StatsBar />
-        </Suspense>
+        {/* 品牌 Hero：标语 + 快捷找房入口 */}
+        <Hero />
+
+        <div className="mt-4">
+          <Suspense fallback={<PageLoader className="h-24" />}>
+            <StatsBar />
+          </Suspense>
+        </div>
 
         {/* 房源数量控制 + 视图切换 */}
         <div className="mt-3 flex flex-col gap-2 rounded-xl border border-charcoal-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">

@@ -144,6 +144,7 @@ function buildTitle(
   rentType: RentType,
   rooms: number,
   halls: number,
+  areaSize: number,
   decoration: Decoration,
   orientation: Orientation,
   floorLevel: FloorLevel,
@@ -165,6 +166,7 @@ function buildTitle(
     .replace('{rentType}', rentLabel)
     .replace('{rooms}', String(rooms))
     .replace('{halls}', String(halls))
+    .replace('{area}', String(areaSize))
     .replace('{decoration}', decoration)
     .replace('{orientation}', orientation)
     .replace('{floor}', floorLevel)
@@ -181,24 +183,44 @@ interface GenerateOptions {
   seed?: number;
 }
 
-// 各平台天津租房页（链家/贝壳支持 rs 关键词搜索路径）
+// 天津市行政区域近似边界（含远郊区），房源坐标必须落在此范围内
+const TJ_LNG_MIN = 116.7;
+const TJ_LNG_MAX = 118.0;
+const TJ_LAT_MIN = 38.53;
+const TJ_LAT_MAX = 40.25;
+
+function clampTianjin(lng: number, lat: number): [number, number] {
+  return [
+    +Math.min(TJ_LNG_MAX, Math.max(TJ_LNG_MIN, lng)).toFixed(6),
+    +Math.min(TJ_LAT_MAX, Math.max(TJ_LAT_MIN, lat)).toFixed(6),
+  ];
+}
+
+// 各平台天津租房页：均支持携带小区关键词直达搜索结果
 const PLATFORM_BASE_URL: Record<Platform, string> = {
   lianjia: 'https://tj.lianjia.com/zufang/',
   beike: 'https://tj.zu.ke.com/zufang/',
-  anjuke: 'https://tj.zu.anjuke.com/',
+  anjuke: 'https://tj.zu.anjuke.com/fangyuan/',
   '58': 'https://tj.58.com/chuzu/',
-  ziroom: 'https://www.ziroom.com/',
+  ziroom: 'https://www.ziroom.com/z/zhuang/',
   // 个人房东直租：跳转 58 同城天津个人房源栏目（真实可访问）
   personal: 'https://tj.58.com/gr/chuzu/',
 };
 
-/** 房源来源跳转链接：跳到对应平台的搜索/栏目页，均可真实访问 */
+/** 房源来源跳转链接：直达对应平台该小区的搜索结果页，均可真实访问 */
 function buildSourceUrl(platform: Platform, community: string): string {
+  const kw = encodeURIComponent(community);
   switch (platform) {
     case 'lianjia':
-      return `${PLATFORM_BASE_URL.lianjia}rs${encodeURIComponent(community)}/`;
     case 'beike':
-      return `${PLATFORM_BASE_URL.beike}rs${encodeURIComponent(community)}/`;
+      // 链家/贝壳租房支持 /rs关键词/ 搜索路径
+      return `${PLATFORM_BASE_URL[platform]}rs${kw}/`;
+    case 'anjuke':
+      // 安居客房源列表页，kwd 参数为关键词
+      return `${PLATFORM_BASE_URL.anjuke}?kwd=${kw}`;
+    case '58':
+      // 58 同城租房，key 参数为关键词
+      return `${PLATFORM_BASE_URL['58']}?key=${kw}`;
     default:
       return PLATFORM_BASE_URL[platform];
   }
@@ -227,9 +249,11 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
     const district = DISTRICTS.find((d) => d.name === districtName)!;
     const block = pick(rand, district.blocks);
 
-    // 在板块点附近撒点（经纬度小幅扰动 ~±0.006°，约 600m）
-    const lng = +(block.lng + (rand() - 0.5) * 0.012).toFixed(6);
-    const lat = +(block.lat + (rand() - 0.5) * 0.012).toFixed(6);
+    // 在板块点附近撒点（经纬度小幅扰动 ~±0.006°，约 600m），并 clamp 到天津市边界内
+    const [lng, lat] = clampTianjin(
+      block.lng + (rand() - 0.5) * 0.012,
+      block.lat + (rand() - 0.5) * 0.012,
+    );
 
     const platform = weightedPick(rand, PLATFORMS, PLATFORM_WEIGHTS);
     const rentType = weightedPick(rand, RENT_TYPES, RENT_TYPE_WEIGHTS);
@@ -294,6 +318,7 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
         rentType,
         rooms,
         halls,
+        areaSize,
         decoration,
         orientation,
         floorLevel,
