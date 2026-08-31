@@ -7,12 +7,9 @@ import type {
   RentType,
 } from '../types/house';
 import {
-  COMMUNITY_PREFIX,
-  COMMUNITY_SUFFIX,
   DISTRICTS,
   LANDLORD_NAMES,
-  SUBWAY_LINES,
-  SUBWAY_STATIONS,
+  ZIROOM_DISTRICT_CODES,
 } from './tianjin';
 
 // ---------- 确定性伪随机（mulberry32），保证同 count 下结果稳定 ----------
@@ -36,33 +33,37 @@ function randInt(rand: () => number, min: number, max: number): number {
   return Math.floor(rand() * (max - min + 1)) + min;
 }
 
-// 区域权重：市中心房源更密集
+// 区域权重：市中心房源更密集（参考贝壳各区域在租套数比例）
 const DISTRICT_WEIGHTS: Record<string, number> = {
-  和平区: 1.6,
-  河西区: 1.5,
-  南开区: 1.5,
+  和平区: 1.4,
+  河西区: 1.6,
+  南开区: 1.6,
   河北区: 0.9,
-  河东区: 1.1,
+  河东区: 1.0,
   红桥区: 0.8,
-  北辰区: 0.9,
-  东丽区: 0.8,
-  西青区: 1.0,
-  津南区: 0.9,
+  北辰区: 1.0,
+  东丽区: 0.9,
+  西青区: 0.8,
+  津南区: 1.1,
 };
 
-// 区域价格系数（基准倍数）
+// 区域价格系数（按真实在租房源抽样校准，基准 36 元/㎡·月）
+// 抽样参考：和平吉利花园 73㎡ 4200 元、河西红波里 61㎡ 3200 元、
+// 南开凤园北里 35㎡ 1550 元、津南咸水沽 82㎡ 1100 元、北仓荣翔园 75㎡ 1600 元
 const DISTRICT_PRICE_FACTOR: Record<string, number> = {
   和平区: 1.55,
   河西区: 1.3,
   南开区: 1.25,
-  河北区: 0.9,
-  河东区: 1.0,
-  红桥区: 0.85,
-  北辰区: 0.75,
-  东丽区: 0.7,
-  西青区: 0.78,
-  津南区: 0.72,
+  河北区: 0.95,
+  河东区: 1.05,
+  红桥区: 0.82,
+  北辰区: 0.72,
+  东丽区: 0.65,
+  西青区: 0.72,
+  津南区: 0.5,
 };
+
+const BASE_PRICE_PER_SQM = 36; // 元/㎡·月，按天津真实市场校准
 
 const PLATFORMS: Platform[] = [
   'lianjia',
@@ -174,86 +175,81 @@ function buildTitle(
     .trim();
 }
 
-function communityName(rand: () => number): string {
-  return `${pick(rand, COMMUNITY_PREFIX)}${pick(rand, COMMUNITY_SUFFIX)}`;
-}
-
 interface GenerateOptions {
   count: number;
   seed?: number;
 }
 
-// 天津市行政区域近似边界（含远郊区），房源坐标必须落在此范围内
-const TJ_LNG_MIN = 116.7;
-const TJ_LNG_MAX = 118.0;
-const TJ_LAT_MIN = 38.53;
-const TJ_LAT_MAX = 40.25;
-
-function clampTianjin(lng: number, lat: number): [number, number] {
-  return [
-    +Math.min(TJ_LNG_MAX, Math.max(TJ_LNG_MIN, lng)).toFixed(6),
-    +Math.min(TJ_LAT_MAX, Math.max(TJ_LAT_MIN, lat)).toFixed(6),
-  ];
-}
-
-// 各平台天津租房页：均支持携带小区关键词直达搜索结果
-const PLATFORM_BASE_URL: Record<Platform, string> = {
-  lianjia: 'https://tj.lianjia.com/zufang/',
-  beike: 'https://tj.zu.ke.com/zufang/',
-  anjuke: 'https://tj.zu.anjuke.com/fangyuan/',
-  '58': 'https://tj.58.com/chuzu/',
-  ziroom: 'https://www.ziroom.com/z/zhuang/',
-  // 个人房东直租：跳转 58 同城天津个人房源栏目（真实可访问）
-  personal: 'https://tj.58.com/gr/chuzu/',
-};
-
-/** 房源来源跳转链接：直达对应平台该小区的搜索结果页，均可真实访问 */
-function buildSourceUrl(platform: Platform, community: string): string {
+// ---------- 平台真实链接 ----------
+// 全部为真实可访问的天津站地址：
+//  - 链家/贝壳：/rs关键词/ 为官方关键词搜索路径
+//  - 安居客：?kw= 关键词搜索（已实测返回"为您找到xx附近租房"）
+//  - 58同城：?key= 关键词搜索
+//  - 自如：区域 + 户型的真实列表页（tj.ziroom.com 城市子域）
+//  - 个人房东：安居客个人房源栏目 l2
+function buildSourceUrl(
+  platform: Platform,
+  community: string,
+  district: string,
+  rentType: RentType,
+): string {
   const kw = encodeURIComponent(community);
   switch (platform) {
     case 'lianjia':
+      return `https://tj.lianjia.com/zufang/rs${kw}/`;
     case 'beike':
-      // 链家/贝壳租房支持 /rs关键词/ 搜索路径
-      return `${PLATFORM_BASE_URL[platform]}rs${kw}/`;
+      return `https://tj.zu.ke.com/zufang/rs${kw}/`;
     case 'anjuke':
-      // 安居客房源列表页，kwd 参数为关键词
-      return `${PLATFORM_BASE_URL.anjuke}?kwd=${kw}`;
+      return `https://tj.zu.anjuke.com/fangyuan/?kw=${kw}`;
     case '58':
-      // 58 同城租房，key 参数为关键词
-      return `${PLATFORM_BASE_URL['58']}?key=${kw}`;
+      return `https://tj.58.com/chuzu/?key=${kw}`;
+    case 'ziroom': {
+      const code = ZIROOM_DISTRICT_CODES[district] ?? '120103';
+      const z = rentType === 'shared' ? 'z1' : 'z2';
+      return `https://tj.ziroom.com/z/${z}-d${code}/`;
+    }
     default:
-      return PLATFORM_BASE_URL[platform];
+      return `https://tj.zu.anjuke.com/fangyuan/l2/?kw=${kw}`;
   }
 }
 
 /**
  * 生成房源数据集。默认 10000 条，上限 50000 条。
- * 通过确定性 PRNG + 权重分布保证结果稳定且贴近真实天津市场。
+ * 数据基于真实参考生成：真实小区（贝壳/安居客/自如在租小区）、
+ * 真实板块坐标、真实地铁站与线路、真实市场租金校准。
  */
 export function generateListings({ count, seed = 20260824 }: GenerateOptions): HouseListing[] {
   const rand = mulberry32(seed);
   const now = Date.now();
 
   // 预计算区域加权抽样池，避免每条重复计算
-  const districtPool: string[] = [];
+  const districtPool: typeof DISTRICTS = [];
   for (const d of DISTRICTS) {
     const w = DISTRICT_WEIGHTS[d.name] ?? 1;
     const n = Math.max(1, Math.round(w * 10));
-    for (let i = 0; i < n; i++) districtPool.push(d.name);
+    for (let i = 0; i < n; i++) districtPool.push(d);
   }
 
   const listings: HouseListing[] = new Array(count);
 
   for (let i = 0; i < count; i++) {
-    const districtName = pick(rand, districtPool);
-    const district = DISTRICTS.find((d) => d.name === districtName)!;
+    const district = pick(rand, districtPool);
     const block = pick(rand, district.blocks);
+    // 真实小区名（来自贝壳/安居客/自如在租小区数据）
+    const community = pick(rand, block.communities);
 
-    // 在板块点附近撒点（经纬度小幅扰动 ~±0.006°，约 600m），并 clamp 到天津市边界内
-    const [lng, lat] = clampTianjin(
-      block.lng + (rand() - 0.5) * 0.012,
-      block.lat + (rand() - 0.5) * 0.012,
-    );
+    // 坐标：真实板块中心附近小幅撒点（±0.005°，约 500m）
+    const lng = +(block.lng + (rand() - 0.5) * 0.01).toFixed(6);
+    const lat = +(block.lat + (rand() - 0.5) * 0.008).toFixed(6);
+
+    // 地铁：使用板块真实地铁信息（无地铁板块 nearSubway=false）
+    const sw = block.subway;
+    const nearSubway = sw !== null;
+    const subwayLine = sw ? sw.line : '';
+    const subwayStation = sw ? sw.station : '';
+    const subwayDistance = sw
+      ? Math.max(80, Math.round(sw.walk * (0.85 + rand() * 0.3)))
+      : 0;
 
     const platform = weightedPick(rand, PLATFORMS, PLATFORM_WEIGHTS);
     const rentType = weightedPick(rand, RENT_TYPES, RENT_TYPE_WEIGHTS);
@@ -277,14 +273,7 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
     const floor = randInt(rand, 1, totalFloor);
     const floorLevel = floorLevelFrom(floor, totalFloor);
 
-    const nearSubway = rand() < 0.62;
-    const subwayLine = pick(rand, SUBWAY_LINES);
-    const subwayStation = pick(rand, SUBWAY_STATIONS);
-    const subwayDistance = nearSubway
-      ? randInt(rand, 80, 800)
-      : randInt(rand, 900, 2500);
-
-    // 价格：基准 60 元/㎡·月，按区域/类型/装修/楼层/地铁 调整
+    // 价格：按真实市场校准（区域/类型/装修/楼层/地铁因子）
     const districtFactor = DISTRICT_PRICE_FACTOR[district.name] ?? 1;
     const rentFactor =
       rentType === 'whole' ? 1 : rentType === 'apartment' ? 1.1 : 0.55;
@@ -298,14 +287,18 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
             : 0.88;
     const floorFactor =
       floorLevel === '中楼层' ? 1.05 : floorLevel === '高楼层' ? 0.98 : 0.95;
-    const subwayFactor = nearSubway ? 1.08 : 1.0;
+    const subwayFactor = nearSubway ? 1.06 : 1.0;
 
     const rawPrice =
-      areaSize * 60 * districtFactor * rentFactor * decoFactor * floorFactor * subwayFactor;
+      areaSize *
+      BASE_PRICE_PER_SQM *
+      districtFactor *
+      rentFactor *
+      decoFactor *
+      floorFactor *
+      subwayFactor;
     // 合租按间计价，整数化到 50
     const price = Math.max(600, Math.round(rawPrice / 50) * 50);
-
-    const community = communityName(rand);
 
     const publishedDaysAgo = randInt(rand, 0, 30);
     const publishedAt = now - publishedDaysAgo * 86400000 - randInt(rand, 0, 86400000);
@@ -351,37 +344,28 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
       publishedAt,
       isVerified: rand() < 0.78,
       landlord: pick(rand, LANDLORD_NAMES),
-      sourceUrl: buildSourceUrl(platform, community),
+      sourceUrl: buildSourceUrl(platform, community, district.name, rentType),
     };
   }
 
   return listings;
 }
 
-// 默认数据集（10,000 条），上限 50000 条
-const DEFAULT_COUNT = 10000;
+// ---------- 对外常量与缓存封装 ----------
+
 export const MAX_LISTING_COUNT = 50000;
+export const DEFAULT_LISTING_COUNT = 10000;
 
-// 多规模 LRU 缓存（最多 4 份），在数量预设间来回切换时秒开
-const listingCache = new Map<number, HouseListing[]>();
-const CACHE_MAX_ENTRIES = 4;
+/** 按 count 缓存生成结果（确定性 PRNG 保证同 count 结果一致） */
+const cache = new Map<number, HouseListing[]>();
 
-export function getListings(count: number = DEFAULT_COUNT): HouseListing[] {
-  const hit = listingCache.get(count);
-  if (hit) {
-    // 重新插入以刷新 LRU 顺序
-    listingCache.delete(count);
-    listingCache.set(count, hit);
-    return hit;
-  }
-  const data = generateListings({ count });
-  listingCache.set(count, data);
-  while (listingCache.size > CACHE_MAX_ENTRIES) {
-    const oldest = listingCache.keys().next().value;
-    if (oldest === undefined) break;
-    listingCache.delete(oldest);
+export function getListings(count: number): HouseListing[] {
+  const n = Math.min(MAX_LISTING_COUNT, Math.max(1, Math.round(count)));
+  let data = cache.get(n);
+  if (!data) {
+    data = generateListings({ count: n });
+    if (cache.size >= 8) cache.clear(); // 简单容量控制
+    cache.set(n, data);
   }
   return data;
 }
-
-export const DEFAULT_LISTING_COUNT = DEFAULT_COUNT;
