@@ -23,8 +23,11 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
   const platformColor = PLATFORM_COLORS[listing.platform];
   const isPersonal = listing.platform === 'personal';
   const userLocation = useListingStore((s) => s.userLocation);
-  const dist = userLocation
-    ? distanceMeters(userLocation.lng, userLocation.lat, listing.lng, listing.lat)
+  const mapPin = useListingStore((s) => s.mapPin);
+  // 距离锚点：地图标点优先，其次定位位置
+  const anchor = mapPin ?? userLocation;
+  const dist = anchor
+    ? distanceMeters(anchor.lng, anchor.lat, listing.lng, listing.lat)
     : null;
 
   return (
@@ -123,7 +126,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
         <div className="mt-1.5 flex items-center gap-1 text-[11px] text-charcoal-400">
           {dist !== null && (
             <span className="mr-1 rounded bg-blue-50 px-1.5 py-0.5 font-medium text-blue-600">
-              距您 {formatDistance(dist)}
+              {mapPin ? '距标点' : '距您'} {formatDistance(dist)}
             </span>
           )}
           {listing.nearSubway ? (

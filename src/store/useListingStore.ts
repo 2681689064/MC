@@ -22,6 +22,12 @@ export interface UserLocation {
   accuracy: number; // 精度（米）
 }
 
+/** 地图标点（用户手动指定的搜索锚点） */
+export interface MapPin {
+  lng: number;
+  lat: number;
+}
+
 export type LocationStatus = 'idle' | 'locating' | 'ok' | 'error';
 
 export interface Filters {
@@ -60,6 +66,8 @@ interface ListingState {
   pageSize: number;
   userLocation: UserLocation | null;
   locationStatus: LocationStatus;
+  /** 地图标点找房锚点（设置后优先于定位位置作为半径搜索圆心） */
+  mapPin: MapPin | null;
   /** memoized 派生 */
   _sig: string;
   _filtered: HouseListing[];
@@ -72,6 +80,10 @@ interface ListingState {
   requestLocation: () => Promise<UserLocation | null>;
   /** 定位失败时的降级：使用天津市中心模拟位置（标注为模拟） */
   setMockLocation: () => void;
+  /** 地图标点：设置搜索锚点（默认 3km 半径 + 按距离排序） */
+  setMapPin: (lng: number, lat: number) => void;
+  /** 清除地图标点 */
+  clearMapPin: () => void;
   getFiltered: () => HouseListing[];
 }
 
@@ -93,14 +105,24 @@ function signature(filters: Filters, sort: SortKey, ids: string): string {
   ].join('|');
 }
 
+/** 半径搜索/距离排序的锚点：地图标点优先，其次定位位置 */
+function anchorOf(
+  mapPin?: MapPin | null,
+  userLocation?: UserLocation | null,
+): MapPin | null {
+  return mapPin ?? userLocation ?? null;
+}
+
 export function applyFilters(
   listings: HouseListing[],
   filters: Filters,
   userLocation?: UserLocation | null,
+  mapPin?: MapPin | null,
 ): HouseListing[] {
   const kw = filters.keyword.trim().toLowerCase();
+  const anchor = anchorOf(mapPin, userLocation);
   const nearbyRadiusM =
-    filters.nearbyRadiusKm > 0 && userLocation ? filters.nearbyRadiusKm * 1000 : 0;
+    filters.nearbyRadiusKm > 0 && anchor ? filters.nearbyRadiusKm * 1000 : 0;
   const result: HouseListing[] = [];
   for (const l of listings) {
     if (filters.district && l.district !== filters.district) continue;
@@ -112,7 +134,7 @@ export function applyFilters(
     if (filters.nearSubwayOnly && !l.nearSubway) continue;
     if (filters.verifiedOnly && !l.isVerified) continue;
     if (nearbyRadiusM > 0) {
-      if (distanceMeters(userLocation!.lng, userLocation!.lat, l.lng, l.lat) > nearbyRadiusM)
+      if (distanceMeters(anchor!.lng, anchor!.lat, l.lng, l.lat) > nearbyRadiusM)
         continue;
     }
     if (kw) {
@@ -128,6 +150,7 @@ export function applySort(
   listings: HouseListing[],
   sort: SortKey,
   userLocation?: UserLocation | null,
+  mapPin?: MapPin | null,
 ): HouseListing[] {
   const arr = listings.slice();
   switch (sort) {
@@ -142,8 +165,9 @@ export function applySort(
         (a, b) => a.price / a.areaSize - b.price / b.areaSize,
       );
     case 'distance-asc': {
-      if (!userLocation) return arr; // 未定位时保持原序
-      const { lng, lat } = userLocation;
+      const anchor = anchorOf(mapPin, userLocation);
+      if (!anchor) return arr; // 无锚点时保持原序
+      const { lng, lat } = anchor;
       // 预计算距离缓存，避免 sort 比较器内重复 haversine
       const distCache = new Map<string, number>();
       const dist = (l: HouseListing) => {
@@ -170,6 +194,7 @@ export const useListingStore = create<ListingState>((set, get) => ({
   pageSize: 30,
   userLocation: null,
   locationStatus: 'idle',
+  mapPin: null,
   _sig: '',
   _filtered: [],
 
@@ -227,18 +252,38 @@ export const useListingStore = create<ListingState>((set, get) => ({
     });
   },
 
+  setMapPin: (lng, lat) =>
+    set((s) => ({
+      mapPin: { lng, lat },
+      // 标点落点即开启半径搜索（默认 3km）并按距离排序，直观呈现"附近优先"
+      filters: { ...s.filters, nearbyRadiusKm: s.filters.nearbyRadiusKm > 0 ? s.filters.nearbyRadiusKm : 3 },
+      sort: 'distance-asc',
+      _sig: '',
+    })),
+
+  clearMapPin: () =>
+    set((s) => ({
+      mapPin: null,
+      // 清除标点后关闭半径筛选（避免意外以定位位置为圆心继续过滤）
+      filters: { ...s.filters, nearbyRadiusKm: 0 },
+      sort: s.sort === 'distance-asc' ? 'price-asc' : s.sort,
+      _sig: '',
+    })),
+
   getFiltered: () => {
-    const { listings, filters, sort, userLocation, _sig, _filtered } = get();
+    const { listings, filters, sort, userLocation, mapPin, _sig, _filtered } = get();
+    const anchor = anchorOf(mapPin, userLocation);
     const sig =
       signature(filters, sort, `${listings.length}:${listings[0]?.id ?? ''}`) +
-      (userLocation && (filters.nearbyRadiusKm > 0 || sort === 'distance-asc')
-        ? `@${userLocation.lng.toFixed(5)},${userLocation.lat.toFixed(5)}`
+      (anchor && (filters.nearbyRadiusKm > 0 || sort === 'distance-asc')
+        ? `@${anchor.lng.toFixed(5)},${anchor.lat.toFixed(5)}`
         : '');
     if (sig === _sig) return _filtered;
     const filtered = applySort(
-      applyFilters(listings, filters, userLocation),
+      applyFilters(listings, filters, userLocation, mapPin),
       sort,
       userLocation,
+      mapPin,
     );
     set({ _sig: sig, _filtered: filtered });
     return filtered;

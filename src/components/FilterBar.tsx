@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Search, RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { DISTRICTS } from '@/data/tianjin';
 import { cn, formatNumber } from '@/lib/utils';
 import LocationControl from './LocationControl';
@@ -29,6 +29,8 @@ const PLATFORMS: Platform[] = [
 const RENT_TYPES: RentType[] = ['whole', 'shared', 'apartment'];
 const ROOM_OPTIONS = [0, 1, 2, 3, 4];
 const NEARBY_OPTIONS = [0, 1, 3, 5, 10];
+// 标点找房半径选项（与 MapView 面板保持一致）
+const PIN_RADIUS_OPTIONS = [1, 2, 3, 5, 10];
 const PRICE_PRESETS = [
   { label: '全部', min: 0, max: 20000 },
   { label: '≤1500', min: 0, max: 1500 },
@@ -68,6 +70,8 @@ export default function FilterBar() {
     useListingStore();
   const filtered = useListingStore((s) => s.getFiltered());
   const userLocation = useListingStore((s) => s.userLocation);
+  const mapPin = useListingStore((s) => s.mapPin);
+  const clearMapPin = useListingStore((s) => s.clearMapPin);
 
   const districtOptions = useMemo(() => ['', ...DISTRICTS.map((d) => d.name)], []);
 
@@ -126,8 +130,35 @@ export default function FilterBar() {
         </div>
       </div>
 
-      {/* 附近搜索：定位成功后显示 */}
-      {userLocation && (
+      {/* 标点找房：地图标点存在时显示（优先于定位锚点） */}
+      {mapPin && (
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50/60 px-3 py-2">
+          <span className="mr-1 text-xs font-medium text-brand-600">标点找房</span>
+          {PIN_RADIUS_OPTIONS.map((km) => (
+            <Chip
+              key={km}
+              active={filters.nearbyRadiusKm === km}
+              onClick={() => setFilters({ nearbyRadiusKm: km })}
+            >
+              {km}km
+            </Chip>
+          ))}
+          <span className="text-xs text-charcoal-400">
+            以地图标点为圆心（经纬度 {mapPin.lng.toFixed(3)}, {mapPin.lat.toFixed(3)}）· {formatNumber(filtered.length)} 套
+          </span>
+          <button
+            type="button"
+            onClick={clearMapPin}
+            className="ml-auto inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs text-charcoal-500 transition hover:text-red-500"
+          >
+            <X size={12} />
+            清除标点
+          </button>
+        </div>
+      )}
+
+      {/* 附近搜索：定位成功且无标点时显示 */}
+      {!mapPin && userLocation && (
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2">
           <span className="mr-1 text-xs font-medium text-blue-500">附近找房</span>
           {NEARBY_OPTIONS.map((km) => (
