@@ -29,8 +29,8 @@ const PLATFORMS: Platform[] = [
 const RENT_TYPES: RentType[] = ['whole', 'shared', 'apartment'];
 const ROOM_OPTIONS = [0, 1, 2, 3, 4];
 const NEARBY_OPTIONS = [0, 1, 3, 5, 10];
-// 标点找房半径选项（与 MapView 面板保持一致）
-const PIN_RADIUS_OPTIONS = [1, 2, 3, 5, 10];
+// 标点找房半径选项（与 MapView 面板保持一致；0 = 不限，保留标点但取消半径筛选）
+const PIN_RADIUS_OPTIONS = [0, 1, 2, 3, 5, 10];
 const PRICE_PRESETS = [
   { label: '全部', min: 0, max: 20000 },
   { label: '≤1500', min: 0, max: 1500 },
@@ -140,11 +140,14 @@ export default function FilterBar() {
               active={filters.nearbyRadiusKm === km}
               onClick={() => setFilters({ nearbyRadiusKm: km })}
             >
-              {km}km
+              {km === 0 ? '不限' : `${km}km`}
             </Chip>
           ))}
           <span className="text-xs text-charcoal-400">
-            以地图标点为圆心（经纬度 {mapPin.lng.toFixed(3)}, {mapPin.lat.toFixed(3)}）· {formatNumber(filtered.length)} 套
+            {filters.nearbyRadiusKm > 0
+              ? `以地图标点为圆心 ${filters.nearbyRadiusKm}km（经纬度 ${mapPin.lng.toFixed(3)}, ${mapPin.lat.toFixed(3)}）`
+              : `标点 ${mapPin.lng.toFixed(3)}, ${mapPin.lat.toFixed(3)}（半径不限）`}{' '}
+            · {formatNumber(filtered.length)} 套
           </span>
           <button
             type="button"

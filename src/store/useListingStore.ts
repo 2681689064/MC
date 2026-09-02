@@ -80,8 +80,8 @@ interface ListingState {
   requestLocation: () => Promise<UserLocation | null>;
   /** 定位失败时的降级：使用天津市中心模拟位置（标注为模拟） */
   setMockLocation: () => void;
-  /** 地图标点：设置搜索锚点（默认 3km 半径 + 按距离排序） */
-  setMapPin: (lng: number, lat: number) => void;
+  /** 地图标点：设置搜索锚点。keepRadius=true 时保持当前半径（含"不限"），用于拖拽调整 */
+  setMapPin: (lng: number, lat: number, opts?: { keepRadius?: boolean }) => void;
   /** 清除地图标点 */
   clearMapPin: () => void;
   getFiltered: () => HouseListing[];
@@ -252,11 +252,19 @@ export const useListingStore = create<ListingState>((set, get) => ({
     });
   },
 
-  setMapPin: (lng, lat) =>
+  setMapPin: (lng, lat, opts) =>
     set((s) => ({
       mapPin: { lng, lat },
-      // 标点落点即开启半径搜索（默认 3km）并按距离排序，直观呈现"附近优先"
-      filters: { ...s.filters, nearbyRadiusKm: s.filters.nearbyRadiusKm > 0 ? s.filters.nearbyRadiusKm : 3 },
+      // 拖拽图钉（keepRadius）保持当前半径设置（含"不限"=0）；
+      // 首次落点时若半径未开启则默认 3km，直观呈现"范围找房"
+      filters: {
+        ...s.filters,
+        nearbyRadiusKm: opts?.keepRadius
+          ? s.filters.nearbyRadiusKm
+          : s.filters.nearbyRadiusKm > 0
+            ? s.filters.nearbyRadiusKm
+            : 3,
+      },
       sort: 'distance-asc',
       _sig: '',
     })),

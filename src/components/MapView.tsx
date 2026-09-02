@@ -21,7 +21,8 @@ import { cn, formatNumber } from '@/lib/utils';
 
 const TIANJIN_CENTER: [number, number] = [39.13, 117.2];
 const MAX_MARKERS = 400;
-const PIN_RADIUS_OPTIONS = [1, 2, 3, 5, 10];
+// 0 = 不限：保留标点作为距离参考锚点，但取消半径筛选
+const PIN_RADIUS_OPTIONS = [0, 1, 2, 3, 5, 10];
 
 /** 品牌色图钉图标（divIcon：SVG 图钉 + 落点脉冲光晕） */
 const pinIcon = L.divIcon({
@@ -71,6 +72,11 @@ function UserLocationMarker({ location }: { location: UserLocation }) {
 
 /** 标点模式：点击地图放置/移动搜索图钉 */
 function MapClickCatcher({ active, onPick }: { active: boolean; onPick: (lat: number, lng: number) => void }) {
+  const map = useMap();
+  // 进入标点模式时关闭已打开的房源弹窗：弹窗区域会吞掉地图点击，导致落点失败
+  useEffect(() => {
+    if (active) map.closePopup();
+  }, [active, map]);
   useMapEvents({
     click(e) {
       if (active) onPick(e.latlng.lat, e.latlng.lng);
@@ -141,20 +147,22 @@ export default function MapView({ className }: { className?: string }) {
 
         {userLocation && !mapPin && <UserLocationMarker location={userLocation} />}
 
-        {/* 地图标点：可拖拽图钉 + 半径圈（标点优先作为搜索圆心） */}
+        {/* 地图标点：可拖拽图钉 + 半径圈（标点优先作为搜索圆心；"不限"时不画圈） */}
         {mapPin && (
           <>
-            <Circle
-              center={[mapPin.lat, mapPin.lng]}
-              radius={filters.nearbyRadiusKm * 1000}
-              pathOptions={{
-                color: '#E63D08',
-                weight: 2,
-                dashArray: '6 6',
-                fillColor: '#FF5516',
-                fillOpacity: 0.06,
-              }}
-            />
+            {filters.nearbyRadiusKm > 0 && (
+              <Circle
+                center={[mapPin.lat, mapPin.lng]}
+                radius={filters.nearbyRadiusKm * 1000}
+                pathOptions={{
+                  color: '#E63D08',
+                  weight: 2,
+                  dashArray: '6 6',
+                  fillColor: '#FF5516',
+                  fillOpacity: 0.06,
+                }}
+              />
+            )}
             <Marker
               position={[mapPin.lat, mapPin.lng]}
               icon={pinIcon}
@@ -163,7 +171,8 @@ export default function MapView({ className }: { className?: string }) {
               eventHandlers={{
                 dragend: (e) => {
                   const p = (e.target as L.Marker).getLatLng();
-                  setMapPin(p.lng, p.lat);
+                  // keepRadius：拖拽只移动圆心，保持当前半径设置（含"不限"）
+                  setMapPin(p.lng, p.lat, { keepRadius: true });
                 },
               }}
             >
@@ -171,7 +180,11 @@ export default function MapView({ className }: { className?: string }) {
                 <div className="text-xs">
                   <div className="font-semibold">搜索中心</div>
                   <div className="text-charcoal-400">
-                    拖动图钉调整位置 · {filters.nearbyRadiusKm}km 内共 {formatNumber(filtered.length)} 套
+                    拖动图钉调整位置 ·{' '}
+                    {filters.nearbyRadiusKm > 0
+                      ? `${filters.nearbyRadiusKm}km 内`
+                      : '半径不限'}{' '}
+                    共 {formatNumber(filtered.length)} 套
                   </div>
                 </div>
               </Popup>
@@ -225,7 +238,7 @@ export default function MapView({ className }: { className?: string }) {
         {pinMode ? '点击地图放置图钉' : '标点找房'}
       </button>
 
-      {/* 标点面板：半径选择 + 结果统计 + 清除 */}
+      {/* 标点面板：半径选择（含"不限"）+ 结果统计 + 清除 */}
       {mapPin && (
         <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 rounded-xl border border-brand-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
           <span className="mr-0.5 text-xs font-semibold text-brand-600">范围找房</span>
@@ -241,11 +254,14 @@ export default function MapView({ className }: { className?: string }) {
                   : 'bg-brand-50 text-brand-600 hover:bg-brand-100',
               )}
             >
-              {km}km
+              {km === 0 ? '不限' : `${km}km`}
             </button>
           ))}
           <span className="ml-1 text-[11px] text-charcoal-500">
-            {formatNumber(filtered.length)} 套 · 拖动图钉可调整
+            {filters.nearbyRadiusKm > 0
+              ? `${filters.nearbyRadiusKm}km 内 ${formatNumber(filtered.length)} 套`
+              : `半径不限 ${formatNumber(filtered.length)} 套`}{' '}
+            · 拖动图钉可调整
           </span>
           <button
             type="button"
