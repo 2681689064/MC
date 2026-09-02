@@ -46,26 +46,29 @@ export default function StatsBar() {
   const listings = useListingStore((s) => s.listings);
   const filtered = useListingStore((s) => s.getFiltered());
 
-  const { avgPrice, avgPsm, nearSubwayRate, verifiedRate } = useMemo(() => {
-    const base = filtered.length ? filtered : listings;
-    let sum = 0;
-    let psm = 0;
-    let near = 0;
-    let verified = 0;
-    for (const l of base) {
-      sum += l.price;
-      psm += l.price / l.areaSize;
-      if (l.nearSubway) near++;
-      if (l.isVerified) verified++;
-    }
-    const n = base.length || 1;
-    return {
-      avgPrice: Math.round(sum / n),
-      avgPsm: Math.round(psm / n),
-      nearSubwayRate: Math.round((near / n) * 100),
-      verifiedRate: Math.round((verified / n) * 100),
-    };
-  }, [filtered, listings]);
+  const { avgPrice, avgPsm, nearSubwayRate, verifiedRate, nearCount, verifiedCount } =
+    useMemo(() => {
+      const base = filtered.length ? filtered : listings;
+      let sum = 0;
+      let psm = 0;
+      let near = 0;
+      let verified = 0;
+      for (const l of base) {
+        sum += l.price;
+        psm += l.price / l.areaSize;
+        if (l.nearSubway) near++;
+        if (l.isVerified) verified++;
+      }
+      const n = base.length || 1;
+      return {
+        avgPrice: Math.round(sum / n),
+        avgPsm: Math.round(psm / n),
+        nearSubwayRate: Math.round((near / n) * 100),
+        verifiedRate: Math.round((verified / n) * 100),
+        nearCount: near,
+        verifiedCount: verified,
+      };
+    }, [filtered, listings]);
 
   const platformData = useMemo(() => {
     const map = new Map<Platform, number>();
@@ -103,48 +106,63 @@ export default function StatsBar() {
         value={`¥${formatNumber(avgPrice)}`}
         hint={`¥${avgPsm}/㎡·月`}
       />
-      <StatCard label="近地铁占比" value={`${nearSubwayRate}%`} />
-      <StatCard label="已核验" value={`${verifiedRate}%`} />
+      {/* 后两张卡补 hint，四卡均为 3 行内容，大数字基线对齐 */}
+      <StatCard
+        label="近地铁占比"
+        value={`${nearSubwayRate}%`}
+        hint={`${formatNumber(nearCount)} 套近地铁`}
+      />
+      <StatCard
+        label="已核验"
+        value={`${verifiedRate}%`}
+        hint={`${formatNumber(verifiedCount)} 套已核验`}
+      />
 
+      {/* 平台分布：左侧小环图 + 右侧两列带数值图例，填满卡宽消除空洞 */}
       <div className="col-span-2 flex flex-col rounded-xl border border-charcoal-100 bg-white p-3">
-        <div className="mb-1 text-xs text-charcoal-400">平台分布</div>
-        <div className="h-20">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={platformData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={22}
-                outerRadius={34}
-                paddingAngle={1}
-                stroke="none"
-              >
-                {platformData.map((d) => (
-                  <Cell key={d.key} fill={d.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(v: number, n: string) => [`${formatNumber(v)} 套`, n]}
-                contentStyle={{
-                  borderRadius: 8,
-                  border: '1px solid #E5E5EA',
-                  fontSize: 12,
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-charcoal-500">
-          {platformData.map((d) => (
-            <span key={d.key} className="inline-flex items-center gap-1">
-              <span
-                className="inline-block h-2 w-2 rounded-full"
-                style={{ background: d.color }}
-              />
-              {d.name}
-            </span>
-          ))}
+        <div className="text-xs text-charcoal-400">平台分布</div>
+        <div className="flex flex-1 items-center gap-3">
+          <div className="h-16 w-16 shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={platformData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={23}
+                  outerRadius={31}
+                  paddingAngle={1}
+                  stroke="none"
+                >
+                  {platformData.map((d) => (
+                    <Cell key={d.key} fill={d.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(v: number, n: string) => [`${formatNumber(v)} 套`, n]}
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #E5E5EA',
+                    fontSize: 12,
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-charcoal-600">
+            {platformData.map((d) => (
+              <span key={d.key} className="inline-flex items-center gap-1.5">
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: d.color }}
+                />
+                <span className="shrink-0">{d.name}</span>
+                <span className="ml-auto tabular-nums text-charcoal-400">
+                  {formatNumber(d.value)}
+                </span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -98,7 +98,7 @@ export default function FilterBar() {
             value={keywordDraft}
             onChange={(e) => setKeywordDraft(e.target.value)}
             placeholder="搜索小区 / 板块 / 地铁站 / 标题"
-            className="w-full rounded-xl border border-charcoal-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className="h-10 w-full rounded-xl border border-charcoal-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -110,7 +110,7 @@ export default function FilterBar() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="rounded-xl border border-charcoal-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-400"
+            className="h-10 rounded-xl border border-charcoal-200 bg-white px-3 text-sm outline-none focus:border-brand-400"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
@@ -122,7 +122,7 @@ export default function FilterBar() {
           <button
             type="button"
             onClick={resetFilters}
-            className="inline-flex items-center gap-1 rounded-xl border border-charcoal-200 bg-white px-3 py-2.5 text-sm text-charcoal-600 transition hover:bg-charcoal-50"
+            className="inline-flex h-10 items-center gap-1 rounded-xl border border-charcoal-200 bg-white px-3 text-sm text-charcoal-600 transition hover:bg-charcoal-50"
           >
             <RotateCcw size={14} />
             重置
@@ -212,57 +212,53 @@ export default function FilterBar() {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-charcoal-50 px-3 py-2 text-sm">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-charcoal-400">类型</span>
+      {/* 类型/户型/装修：扁平化单行流式布局，chips 逐个换行填满行宽，
+          避免整组换行导致第二行大面积空白 */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-charcoal-50 px-3 py-2 text-sm">
+        <span className="mr-0.5 text-xs font-medium text-charcoal-400">类型</span>
+        <Chip
+          active={filters.rentType === ''}
+          onClick={() => setFilters({ rentType: '' })}
+        >
+          不限
+        </Chip>
+        {RENT_TYPES.map((r) => (
           <Chip
-            active={filters.rentType === ''}
-            onClick={() => setFilters({ rentType: '' })}
+            key={r}
+            active={filters.rentType === r}
+            onClick={() => setFilters({ rentType: r })}
           >
-            不限
+            {RENT_TYPE_LABELS[r]}
           </Chip>
-          {RENT_TYPES.map((r) => (
-            <Chip
-              key={r}
-              active={filters.rentType === r}
-              onClick={() => setFilters({ rentType: r })}
-            >
-              {RENT_TYPE_LABELS[r]}
-            </Chip>
-          ))}
-        </div>
+        ))}
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-charcoal-400">户型</span>
-          {ROOM_OPTIONS.map((n) => (
-            <Chip
-              key={n}
-              active={filters.rooms === n}
-              onClick={() => setFilters({ rooms: n })}
-            >
-              {n === 0 ? '不限' : `${n}室`}
-            </Chip>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-charcoal-400">装修</span>
+        <span className="ml-2 mr-0.5 text-xs font-medium text-charcoal-400">户型</span>
+        {ROOM_OPTIONS.map((n) => (
           <Chip
-            active={filters.decoration === ''}
-            onClick={() => setFilters({ decoration: '' })}
+            key={n}
+            active={filters.rooms === n}
+            onClick={() => setFilters({ rooms: n })}
           >
-            不限
+            {n === 0 ? '不限' : `${n}室`}
           </Chip>
-          {DECORATIONS.map((d) => (
-            <Chip
-              key={d}
-              active={filters.decoration === d}
-              onClick={() => setFilters({ decoration: d })}
-            >
-              {d}
-            </Chip>
-          ))}
-        </div>
+        ))}
+
+        <span className="ml-2 mr-0.5 text-xs font-medium text-charcoal-400">装修</span>
+        <Chip
+          active={filters.decoration === ''}
+          onClick={() => setFilters({ decoration: '' })}
+        >
+          不限
+        </Chip>
+        {DECORATIONS.map((d) => (
+          <Chip
+            key={d}
+            active={filters.decoration === d}
+            onClick={() => setFilters({ decoration: d })}
+          >
+            {d}
+          </Chip>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">

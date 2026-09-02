@@ -43,7 +43,7 @@ export default function HomePage() {
           </Suspense>
         </div>
 
-        {/* 工具栏：数据规模（select 下拉，避免按钮列过密）+ 视图切换 */}
+        {/* 工具栏：数据规模 + 视图切换（自定义输入仅在选择"自定义"时出现，减少常驻拥挤） */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-charcoal-100 bg-white px-3 py-2.5">
           <div className="flex items-center gap-2">
             <Gauge size={15} className="shrink-0 text-brand-500" />
@@ -55,7 +55,7 @@ export default function HomePage() {
               onChange={(e) => {
                 if (e.target.value !== 'custom') setTotalCount(Number(e.target.value));
               }}
-              className="rounded-lg border border-charcoal-200 bg-white px-2.5 py-1.5 text-sm text-charcoal-700 outline-none transition focus:border-brand-400"
+              className="h-9 rounded-lg border border-charcoal-200 bg-white px-2.5 text-sm text-charcoal-700 outline-none transition focus:border-brand-400"
               aria-label="选择数据规模"
             >
               {COUNT_OPTIONS.map((n) => (
@@ -65,16 +65,18 @@ export default function HomePage() {
               ))}
               <option value="custom">自定义</option>
             </select>
-            <input
-              type="number"
-              min={100}
-              max={50000}
-              step={100}
-              value={totalCount}
-              onChange={(e) => setTotalCount(Number(e.target.value))}
-              className="w-20 rounded-lg border border-charcoal-200 px-2.5 py-1.5 text-sm tabular-nums outline-none transition focus:border-brand-400"
-              aria-label="自定义房源数量"
-            />
+            {!COUNT_OPTIONS.includes(totalCount) && (
+              <input
+                type="number"
+                min={100}
+                max={50000}
+                step={100}
+                value={totalCount}
+                onChange={(e) => setTotalCount(Number(e.target.value))}
+                className="h-9 w-20 rounded-lg border border-charcoal-200 px-2.5 text-sm tabular-nums outline-none transition focus:border-brand-400"
+                aria-label="自定义房源数量"
+              />
+            )}
             <span className="hidden text-[11px] text-charcoal-300 sm:inline">
               100 – 50,000
             </span>
@@ -104,8 +106,9 @@ export default function HomePage() {
         </div>
 
         <div className="mt-5">
+          {/* split 同屏：gap-5 与其他区块 20px 间距一致 */}
           {view === 'split' ? (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
               {/* 移动端地图在上，桌面端地图固定右侧 */}
               <div className="order-1 lg:order-2 lg:sticky lg:top-20 lg:self-start">
                 <MapView className="h-64 sm:h-72 lg:h-[calc(100vh-23rem)]" />
@@ -122,7 +125,8 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="border-t border-charcoal-100 py-5 text-center text-xs text-charcoal-400">
+      {/* charcoal-500 保证小字对比度 ≥ 4.5:1 */}
+      <footer className="border-t border-charcoal-100 py-5 text-center text-xs text-charcoal-500">
         觅巢 · 天津租房聚合平台 · 数据为模拟生成，仅用于功能演示
       </footer>
     </div>

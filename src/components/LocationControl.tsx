@@ -48,7 +48,8 @@ export default function LocationControl({ compact = false }: { compact?: boolean
         title="使用浏览器定位，支持附近找房与地图展示我的位置"
         className={cn(
           'inline-flex items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors',
-          compact ? 'py-1.5' : 'py-2.5',
+          /* compact 与筛选栏其他控件统一 40px 高，顶底边对齐 */
+          compact ? 'h-10' : 'py-2.5',
           config.cls,
         )}
       >
@@ -60,7 +61,7 @@ export default function LocationControl({ compact = false }: { compact?: boolean
           type="button"
           onClick={setMockLocation}
           title="浏览器定位不可用时，使用天津市中心位置体验附近找房"
-          className="inline-flex items-center gap-1 rounded-xl border border-dashed border-blue-300 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
+          className="inline-flex h-10 items-center gap-1 rounded-xl border border-dashed border-blue-300 bg-blue-50 px-2 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
         >
           <LocateFixed size={12} />
           改用模拟位置

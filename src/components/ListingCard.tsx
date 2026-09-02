@@ -137,7 +137,8 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
               </span>
             </>
           ) : (
-            <span>距地铁 {listing.subwayDistance}m</span>
+            /* 非近地铁房源 subwayDistance 恒为 0，显示文案而非误导性 "距地铁 0m" */
+            <span>距地铁较远</span>
           )}
         </div>
 
