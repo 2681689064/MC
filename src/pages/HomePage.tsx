@@ -15,7 +15,8 @@ const StatsBar = lazy(() => import('@/components/StatsBar'));
 /** split = 初始页同屏（列表 + 地图板块） */
 type View = 'split' | 'list' | 'map';
 
-const COUNT_OPTIONS = [600, 1200, 3000, 6000, 10000, 20000, 50000];
+// 精简为 5 个常用档位（原 7 档过密），自定义值走输入框
+const COUNT_OPTIONS = [3000, 6000, 10000, 20000, 50000];
 
 const VIEW_TABS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: 'split', label: '同屏', icon: <Columns2 size={14} /> },
@@ -31,38 +32,39 @@ export default function HomePage() {
     <div className="min-h-full">
       <Header />
 
-      <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
         {/* 品牌 Hero：标语 + 快捷找房入口 */}
         <Hero />
 
-        <div className="mt-4">
+        {/* 数据概览：统计卡片 + 平台/区域分布（lg 一行 8 列） */}
+        <div className="mt-5">
           <Suspense fallback={<PageLoader className="h-24" />}>
             <StatsBar />
           </Suspense>
         </div>
 
-        {/* 房源数量控制 + 视图切换 */}
-        <div className="mt-3 flex flex-col gap-2 rounded-xl border border-charcoal-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <Gauge size={16} className="text-brand-500" />
-            <span className="text-sm font-medium text-charcoal-700">
-              房源数量
+        {/* 工具栏：数据规模（select 下拉，避免按钮列过密）+ 视图切换 */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-charcoal-100 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <Gauge size={15} className="shrink-0 text-brand-500" />
+            <span className="shrink-0 text-xs font-medium text-charcoal-500">
+              数据规模
             </span>
-            {COUNT_OPTIONS.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setTotalCount(n)}
-                className={cn(
-                  'rounded-full px-3 py-1 text-sm transition-colors',
-                  totalCount === n
-                    ? 'bg-brand-500 text-white shadow-sm'
-                    : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200',
-                )}
-              >
-                {n.toLocaleString('zh-CN')}
-              </button>
-            ))}
+            <select
+              value={COUNT_OPTIONS.includes(totalCount) ? totalCount : 'custom'}
+              onChange={(e) => {
+                if (e.target.value !== 'custom') setTotalCount(Number(e.target.value));
+              }}
+              className="rounded-lg border border-charcoal-200 bg-white px-2.5 py-1.5 text-sm text-charcoal-700 outline-none transition focus:border-brand-400"
+              aria-label="选择数据规模"
+            >
+              {COUNT_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  {n.toLocaleString('zh-CN')} 套
+                </option>
+              ))}
+              <option value="custom">自定义</option>
+            </select>
             <input
               type="number"
               min={100}
@@ -70,13 +72,15 @@ export default function HomePage() {
               step={100}
               value={totalCount}
               onChange={(e) => setTotalCount(Number(e.target.value))}
-              className="w-24 rounded-full border border-charcoal-200 px-3 py-1 text-sm outline-none focus:border-brand-400"
+              className="w-20 rounded-lg border border-charcoal-200 px-2.5 py-1.5 text-sm tabular-nums outline-none transition focus:border-brand-400"
               aria-label="自定义房源数量"
             />
-            <span className="text-xs text-charcoal-400">套（100-50000）</span>
+            <span className="hidden text-[11px] text-charcoal-300 sm:inline">
+              100 – 50,000
+            </span>
           </div>
 
-          <div className="inline-flex rounded-full border border-charcoal-200 p-0.5">
+          <div className="inline-flex shrink-0 rounded-full border border-charcoal-200 p-0.5">
             {VIEW_TABS.map((t) => (
               <button
                 key={t.key}
@@ -95,13 +99,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="mt-3">
+        <div className="mt-5">
           <FilterBar />
         </div>
 
-        <div className="mt-3">
+        <div className="mt-5">
           {view === 'split' ? (
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
               {/* 移动端地图在上，桌面端地图固定右侧 */}
               <div className="order-1 lg:order-2 lg:sticky lg:top-20 lg:self-start">
                 <MapView className="h-64 sm:h-72 lg:h-[calc(100vh-23rem)]" />
@@ -118,7 +122,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="border-t border-charcoal-100 py-4 text-center text-xs text-charcoal-400">
+      <footer className="border-t border-charcoal-100 py-5 text-center text-xs text-charcoal-400">
         觅巢 · 天津租房聚合平台 · 数据为模拟生成，仅用于功能演示
       </footer>
     </div>

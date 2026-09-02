@@ -64,13 +64,15 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   personal: '个人房东直租',
 };
 
+// 平台色板：色相拉开确保地图/饼图可区分（绿/蓝/玫红/琥珀/青/紫），
+// 安居客避开品牌主色橙 #FF5516，避免与 UI 强调色撞色
 export const PLATFORM_COLORS: Record<Platform, string> = {
-  lianjia: '#00AE66',
-  beike: '#1FAB89',
-  anjuke: '#FF5516',
-  '58': '#FF6B35',
-  ziroom: '#009670',
-  personal: '#7C5CFF',
+  lianjia: '#00AE66', // 链家 · 绿
+  beike: '#2B7FFF', // 贝壳 · 蓝
+  anjuke: '#F43F5E', // 安居客 · 玫红
+  '58': '#F59E0B', // 58同城 · 琥珀
+  ziroom: '#06B6D4', // 自如 · 青
+  personal: '#7C5CFF', // 个人直租 · 紫
 };
 
 export const RENT_TYPE_LABELS: Record<RentType, string> = {

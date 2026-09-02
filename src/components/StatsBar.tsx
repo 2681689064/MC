@@ -31,7 +31,8 @@ interface StatCardProps {
 
 function StatCard({ label, value, hint }: StatCardProps) {
   return (
-    <div className="rounded-xl border border-charcoal-100 bg-white p-3">
+    // justify-center：与图表卡同行等高时内容垂直居中，消除底部空荡感
+    <div className="flex flex-col justify-center rounded-xl border border-charcoal-100 bg-white p-3">
       <div className="text-xs text-charcoal-400">{label}</div>
       <div className="mt-0.5 text-lg font-semibold tabular-nums text-charcoal-900">
         {value}
@@ -89,31 +90,33 @@ export default function StatsBar() {
   }, [listings]);
 
   return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+    /* lg 8 列一行：4 数字卡(各1列) + 平台分布(2列) + 区域分布(2列)，
+       恰好排满无第二行空白；图表卡高度对齐数字卡，整体紧凑 */
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
       <StatCard
         label="在线房源"
         value={formatNumber(listings.length)}
-        hint={`当前筛选 ${formatNumber(filtered.length)} 套`}
+        hint={`筛选 ${formatNumber(filtered.length)} 套`}
       />
       <StatCard
         label="平均月租"
         value={`¥${formatNumber(avgPrice)}`}
-        hint={`单价 ¥${avgPsm}/㎡·月`}
+        hint={`¥${avgPsm}/㎡·月`}
       />
       <StatCard label="近地铁占比" value={`${nearSubwayRate}%`} />
       <StatCard label="已核验" value={`${verifiedRate}%`} />
 
-      <div className="col-span-2 rounded-xl border border-charcoal-100 bg-white p-3">
+      <div className="col-span-2 flex flex-col rounded-xl border border-charcoal-100 bg-white p-3">
         <div className="mb-1 text-xs text-charcoal-400">平台分布</div>
-        <div className="h-24">
+        <div className="h-20">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={platformData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={28}
-                outerRadius={42}
+                innerRadius={22}
+                outerRadius={34}
                 paddingAngle={1}
                 stroke="none"
               >
@@ -145,9 +148,9 @@ export default function StatsBar() {
         </div>
       </div>
 
-      <div className="col-span-2 rounded-xl border border-charcoal-100 bg-white p-3 sm:col-span-2 lg:col-span-2">
+      <div className="col-span-2 flex flex-col rounded-xl border border-charcoal-100 bg-white p-3">
         <div className="mb-1 text-xs text-charcoal-400">区域分布</div>
-        <div className="h-24">
+        <div className="h-20">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={districtData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <XAxis

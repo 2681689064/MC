@@ -11,7 +11,8 @@ export default function ListingList() {
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 132,
+    // 卡片 ~132px + 卡片间留白 10px（item 容器 pb-2.5 计入实测高度）
+    estimateSize: () => 142,
     overscan: 6,
     measureElement: undefined,
   });
@@ -41,7 +42,9 @@ export default function ListingList() {
               key={listing.id}
               data-index={item.index}
               ref={virtualizer.measureElement}
-              className="absolute left-0 top-0 w-full px-0.5"
+              /* pb-2.5：卡片间留白，measureElement 实测高度含留白，
+                 虚拟定位随之下移，形成呼吸感 */
+              className="absolute left-0 top-0 w-full px-0.5 pb-2.5"
               style={{ transform: `translateY(${item.start}px)` }}
             >
               <ListingCard listing={listing} />
