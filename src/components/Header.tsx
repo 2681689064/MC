@@ -7,7 +7,7 @@ export default function Header() {
   const userLocation = useListingStore((s) => s.userLocation);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-charcoal-200/70 bg-white/85 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-charcoal-200/70 bg-white/85 shadow-[0_2px_16px_-8px_rgba(230,61,8,0.10)] backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2.5">
           {/* 觅巢 Logo：GitHub 云端仓库的 觅巢Logo.jpg（public/logo.jpg） */}

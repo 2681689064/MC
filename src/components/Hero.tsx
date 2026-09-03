@@ -32,7 +32,7 @@ function HeroImpl() {
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-400 to-orange-300 px-5 py-6 text-white shadow-lg shadow-brand-500/20 sm:px-10 sm:py-8">
+    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-500 to-amber-400 px-5 py-6 text-white shadow-xl shadow-brand-600/25 sm:px-10 sm:py-8">
       {/* 装饰光晕与纹理 */}
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-28 -left-10 h-56 w-56 rounded-full bg-orange-200/25 blur-3xl" />

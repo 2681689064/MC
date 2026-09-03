@@ -13,6 +13,15 @@
 
   body {
     @apply bg-charcoal-50 text-charcoal-900 font-body antialiased;
+    /* 顶部暖色光晕：打破整页灰白的单调感，与品牌橙呼应 */
+    background-image:
+      radial-gradient(56rem 24rem at 85% -10rem, rgba(255, 158, 113, 0.22), transparent 65%),
+      radial-gradient(44rem 20rem at 6% -6rem, rgba(255, 197, 168, 0.32), transparent 60%);
+    background-repeat: no-repeat;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
   }
 }
 

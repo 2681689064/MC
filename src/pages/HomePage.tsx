@@ -44,7 +44,7 @@ export default function HomePage() {
         </div>
 
         {/* 工具栏：数据规模 + 视图切换（自定义输入仅在选择"自定义"时出现，减少常驻拥挤） */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-charcoal-100 bg-white px-3 py-2.5">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-charcoal-100 bg-white px-3 py-2.5 shadow-sm">
           <div className="flex items-center gap-2">
             <Gauge size={15} className="shrink-0 text-brand-500" />
             <span className="shrink-0 text-xs font-medium text-charcoal-500">
