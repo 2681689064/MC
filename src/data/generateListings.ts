@@ -223,7 +223,7 @@ function buildSourceUrl(
 }
 
 /**
- * 生成房源数据集。默认 10000 条，上限 50000 条。
+ * 生成房源数据集。默认 20000 条（六平台聚合的真实市场规模），上限 50000 条。
  * 数据基于真实参考生成：真实小区（贝壳/安居客/自如在租小区）、
  * 真实板块坐标、真实地铁站与线路、真实市场租金校准。
  */
@@ -363,7 +363,7 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
 // ---------- 对外常量与缓存封装 ----------
 
 export const MAX_LISTING_COUNT = 50000;
-export const DEFAULT_LISTING_COUNT = 10000;
+export const DEFAULT_LISTING_COUNT = 20000;
 
 /** 按 count 缓存生成结果（确定性 PRNG 保证同 count 结果一致） */
 const cache = new Map<number, HouseListing[]>();

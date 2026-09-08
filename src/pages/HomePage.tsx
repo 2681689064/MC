@@ -15,8 +15,8 @@ const StatsBar = lazy(() => import('@/components/StatsBar'));
 /** split = 初始页同屏（列表 + 地图板块） */
 type View = 'split' | 'list' | 'map';
 
-// 精简为 5 个常用档位（原 7 档过密），自定义值走输入框
-const COUNT_OPTIONS = [3000, 6000, 10000, 20000, 50000];
+// 精简为 5 个常用档位（默认 2 万，3 万补 2 万→5 万之间的中间档），自定义值走输入框
+const COUNT_OPTIONS = [5000, 10000, 20000, 30000, 50000];
 
 const VIEW_TABS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: 'split', label: '同屏', icon: <Columns2 size={14} /> },
