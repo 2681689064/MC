@@ -29,31 +29,27 @@ interface StatCardProps {
   value: string;
   hint?: string;
   icon: React.ReactNode;
-  /** 右上角光斑底色（Tailwind bg-* 类） */
-  blob: string;
-  /** 图标与数值颜色（Tailwind text-* 类） */
-  tint: string;
+  /** 强调样式：仅用于核心指标"在线房源"，其余保持中性 */
+  emphasized?: boolean;
 }
 
-function StatCard({ label, value, hint, icon, blob, tint }: StatCardProps) {
+function StatCard({ label, value, hint, icon, emphasized }: StatCardProps) {
   return (
-    // justify-center：与图表卡同行等高时内容垂直居中，消除底部空荡感
-    <div className="group relative flex flex-col justify-center overflow-hidden rounded-xl border border-charcoal-100 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md hover:shadow-brand-500/10">
-      {/* 右上角彩色光斑：为纯数字卡增添色彩层次 */}
-      <div
-        className={cn(
-          'pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full opacity-25 blur-xl transition-opacity duration-200 group-hover:opacity-45',
-          blob,
-        )}
-      />
-      <div className="relative flex items-center gap-1.5 text-xs text-charcoal-400">
-        <span className={tint}>{icon}</span>
+    // 统一中性色系：图标灰、数值深灰，仅核心指标用品牌橙强调，避免多色花哨
+    <div className="flex flex-col justify-center rounded-2xl bg-white px-4 py-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-center gap-1.5 text-xs text-charcoal-400">
+        <span className={emphasized ? 'text-brand-500' : 'text-charcoal-400'}>{icon}</span>
         {label}
       </div>
-      <div className={cn('relative mt-0.5 text-lg font-semibold tabular-nums', tint)}>
+      <div
+        className={cn(
+          'mt-1 text-lg font-semibold tabular-nums',
+          emphasized ? 'text-brand-600' : 'text-charcoal-900',
+        )}
+      >
         {value}
       </div>
-      {hint && <div className="relative text-[11px] text-charcoal-400">{hint}</div>}
+      {hint && <div className="mt-0.5 text-[11px] text-charcoal-400">{hint}</div>}
     </div>
   );
 }
@@ -117,16 +113,13 @@ export default function StatsBar() {
         value={formatNumber(listings.length)}
         hint={`筛选 ${formatNumber(filtered.length)} 套`}
         icon={<Building2 size={13} />}
-        blob="bg-brand-400"
-        tint="text-brand-600"
+        emphasized
       />
       <StatCard
         label="平均月租"
         value={`¥${formatNumber(avgPrice)}`}
         hint={`¥${avgPsm}/㎡·月`}
         icon={<Coins size={13} />}
-        blob="bg-amber-400"
-        tint="text-amber-600"
       />
       {/* 后两张卡补 hint，四卡均为 3 行内容，大数字基线对齐 */}
       <StatCard
@@ -134,20 +127,16 @@ export default function StatsBar() {
         value={`${nearSubwayRate}%`}
         hint={`${formatNumber(nearCount)} 套近地铁`}
         icon={<Train size={13} />}
-        blob="bg-blue-400"
-        tint="text-blue-600"
       />
       <StatCard
         label="已核验"
         value={`${verifiedRate}%`}
         hint={`${formatNumber(verifiedCount)} 套已核验`}
         icon={<BadgeCheck size={13} />}
-        blob="bg-mint-400"
-        tint="text-mint-600"
       />
 
       {/* 平台分布：左侧小环图 + 右侧两列带数值图例，填满卡宽消除空洞 */}
-      <div className="col-span-2 flex flex-col rounded-xl border border-charcoal-100 bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md hover:shadow-brand-500/10">
+      <div className="col-span-2 flex flex-col rounded-2xl bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md">
         <div className="text-xs text-charcoal-400">
           <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-brand-400" />
           平台分布
@@ -197,7 +186,7 @@ export default function StatsBar() {
         </div>
       </div>
 
-      <div className="col-span-2 flex flex-col rounded-xl border border-charcoal-100 bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md hover:shadow-brand-500/10">
+      <div className="col-span-2 flex flex-col rounded-2xl bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md">
         <div className="mb-1 text-xs text-charcoal-400">
           <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
           区域分布

@@ -55,9 +55,10 @@ function Chip({
       onClick={onClick}
       className={cn(
         'rounded-full px-3 py-1 text-sm transition-colors',
+        // 激活态用近黑中性色，避免与品牌橙 CTA 争夺视觉焦点
         active
-          ? 'bg-brand-500 text-white shadow-sm'
-          : 'bg-charcoal-100 text-charcoal-700 hover:bg-charcoal-200',
+          ? 'bg-charcoal-900 text-white'
+          : 'text-charcoal-500 hover:bg-charcoal-100 hover:text-charcoal-800',
       )}
     >
       {children}
@@ -132,7 +133,7 @@ export default function FilterBar() {
 
       {/* 标点找房：地图标点存在时显示（优先于定位锚点） */}
       {mapPin && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50/60 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-brand-50 px-3 py-2">
           <span className="mr-1 text-xs font-medium text-brand-600">标点找房</span>
           {PIN_RADIUS_OPTIONS.map((km) => (
             <Chip
@@ -162,7 +163,7 @@ export default function FilterBar() {
 
       {/* 附近搜索：定位成功且无标点时显示 */}
       {!mapPin && userLocation && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2">
           <span className="mr-1 text-xs font-medium text-blue-500">附近找房</span>
           {NEARBY_OPTIONS.map((km) => (
             <Chip
@@ -217,7 +218,7 @@ export default function FilterBar() {
 
       {/* 类型/户型/装修：扁平化单行流式布局，chips 逐个换行填满行宽，
           避免整组换行导致第二行大面积空白 */}
-      <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-charcoal-50 px-3 py-2 text-sm">
+      <div className="flex flex-wrap items-center gap-1.5 text-sm">
         <span className="mr-0.5 text-xs font-medium text-charcoal-400">类型</span>
         <Chip
           active={filters.rentType === ''}

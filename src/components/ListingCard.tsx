@@ -33,10 +33,10 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
   return (
     <Link
       to={`/listing/${listing.id}`}
-      className="group relative flex gap-3 rounded-2xl border border-charcoal-100 bg-white p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/10 sm:gap-4 sm:p-3"
+      className="group relative flex gap-3 rounded-2xl bg-white p-2.5 shadow-[0_1px_2px_rgba(26,26,46,0.04),0_6px_20px_-12px_rgba(26,26,46,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-6px_rgba(230,61,8,0.18)] sm:gap-4 sm:p-3"
     >
       {/* 图片 */}
-      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl bg-charcoal-100 sm:h-28 sm:w-40">
+      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-charcoal-100 sm:h-28 sm:w-40">
         <img
           src={houseImageUrl(listing)}
           alt={listing.title}

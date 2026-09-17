@@ -121,7 +121,7 @@ export default function MapView({ className }: { className?: string }) {
     <div
       ref={mapRef}
       className={cn(
-        'relative h-[calc(100vh-23rem)] overflow-hidden rounded-xl border border-charcoal-100',
+        'relative h-[calc(100vh-23rem)] overflow-hidden rounded-2xl border border-charcoal-100 shadow-sm',
         className,
       )}
     >
@@ -240,7 +240,7 @@ export default function MapView({ className }: { className?: string }) {
 
       {/* 标点面板：半径选择（含"不限"）+ 结果统计 + 清除 */}
       {mapPin && (
-        <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 rounded-xl border border-brand-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
+        <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 rounded-2xl border border-charcoal-100 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
           <span className="mr-0.5 text-xs font-semibold text-brand-600">范围找房</span>
           {PIN_RADIUS_OPTIONS.map((km) => (
             <button

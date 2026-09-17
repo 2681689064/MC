@@ -32,31 +32,31 @@ function HeroImpl() {
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-500 to-amber-400 px-5 py-6 text-white shadow-xl shadow-brand-600/25 sm:px-10 sm:py-8">
-      {/* 装饰光晕与纹理 */}
-      <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 -left-10 h-56 w-56 rounded-full bg-orange-200/25 blur-3xl" />
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-400 px-6 py-7 text-white shadow-lg shadow-brand-700/15 sm:px-10 sm:py-9">
+      {/* 装饰光晕与纹理：减淡浓度，营造克制的高级感 */}
+      <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-12 h-64 w-64 rounded-full bg-brand-300/20 blur-3xl" />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
             'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-          backgroundSize: '22px 22px',
+          backgroundSize: '24px 24px',
         }}
       />
 
-      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-medium backdrop-blur-sm">
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
             <MapPin size={12} />
             专注天津 · {formatNumber(totalCount)} 套真实在租房源
           </div>
-          <h2 className="text-2xl font-bold leading-tight tracking-wide sm:text-3xl">
+          <h2 className="text-2xl font-bold leading-tight tracking-wide sm:text-4xl">
             在天津，找一个
-            <span className="mx-1 rounded-lg bg-white/95 px-2 text-brand-600">称心的家</span>
+            <span className="mx-1.5 rounded-lg bg-white/95 px-2 text-brand-600">称心的家</span>
           </h2>
           {/* 移动端隐藏长描述，压缩 Hero 高度让核心内容前移 */}
-          <p className="mt-2 hidden max-w-lg text-sm text-white/85 sm:block">
+          <p className="mt-3 hidden max-w-lg text-sm leading-relaxed text-white/75 sm:block">
             一次搜索，聚合链家、贝壳、安居客、58 同城、自如与个人房东直租，
             地铁沿线、价格走势、房东直租一站可比。
           </p>
