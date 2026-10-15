@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { formatDistance, formatNumber, distanceMeters, timeAgo } from '@/lib/utils';
 import { houseImageUrl } from '@/lib/houseImage';
+import { estimateMarketPrice } from '@/data/generateListings';
 import { useListingStore } from '@/store/useListingStore';
 import {
   PLATFORM_COLORS,
@@ -29,6 +30,10 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
   const dist = anchor
     ? distanceMeters(anchor.lng, anchor.lat, listing.lng, listing.lat)
     : null;
+
+  // 价格核验：低于市场参考价 12% 以上视为「笋盘」（虚拟组件仅渲染可见卡片，开销可忽略）
+  const marketPrice = estimateMarketPrice(listing);
+  const priceDevPct = Math.round(((listing.price - marketPrice) / marketPrice) * 100);
 
   return (
     <Link
@@ -143,11 +148,18 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
         </div>
 
         <div className="mt-auto flex items-end justify-between pt-1.5">
-          <div>
-            <span className="text-xl font-bold text-brand-600">
-              ¥{formatNumber(listing.price)}
-            </span>
-            <span className="text-xs text-charcoal-400">/月</span>
+          <div className="flex flex-col items-start gap-0.5">
+            <div className="flex items-baseline">
+              <span className="text-xl font-bold text-brand-600">
+                ¥{formatNumber(listing.price)}
+              </span>
+              <span className="text-xs text-charcoal-400">/月</span>
+            </div>
+            {priceDevPct <= -12 && (
+              <span className="rounded bg-mint-50 px-1.5 py-0.5 text-[11px] font-medium text-mint-700">
+                低于市场 {Math.abs(priceDevPct)}%
+              </span>
+            )}
           </div>
           <span className="text-xs text-charcoal-400 transition-colors group-hover:text-brand-500">
             {isPersonal ? '房东直租' : listing.landlord} · {timeAgo(listing.publishedAt)} · 查看详情 →

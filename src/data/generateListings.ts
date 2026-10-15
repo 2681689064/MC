@@ -306,8 +306,16 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
       decoFactor *
       floorFactor *
       subwayFactor;
+    // 真实市场的价格分散：多数贴近基准、少量笋盘（业主急租）、部分虚高
+    // 扰动 0.87–1.17 → 约 74% 正常区间 / 3% 笋盘 / 23% 偏高，贴近真实挂牌分布
+    const drift = 0.87 + rand() * 0.3;
     // 合租按间计价，整数化到 50
-    const price = Math.max(600, Math.round(rawPrice / 50) * 50);
+    const price = Math.max(600, Math.round((rawPrice * drift) / 50) * 50);
+
+    // 核验为规则驱动而非随机：价格偏离市场基准越大越难通过核验
+    // （模拟真实平台的假房源治理——虚高挂牌核验通过率显著更低）
+    const dev = Math.abs(price - rawPrice) / rawPrice;
+    const verifiedProb = dev < 0.08 ? 0.92 : dev < 0.15 ? 0.72 : 0.3;
 
     const publishedDaysAgo = randInt(rand, 0, 30);
     const publishedAt = now - publishedDaysAgo * 86400000 - randInt(rand, 0, 86400000);
@@ -351,7 +359,7 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
       nearSubway,
       images: randInt(rand, 3, 18),
       publishedAt,
-      isVerified: rand() < 0.78,
+      isVerified: rand() < verifiedProb,
       landlord: pick(rand, LANDLORD_NAMES),
       sourceUrl: buildSourceUrl(platform, community, district.name, rentType),
     };
@@ -361,6 +369,40 @@ export function generateListings({ count, seed = 20260824 }: GenerateOptions): H
 }
 
 // ---------- 对外常量与缓存封装 ----------
+
+/**
+ * 市场参考价：按房源的区域/租型/装修/楼层/地铁因子重算的基准月租
+ * （不含生成时的随机扰动），作为「价格核验」的比对基准。
+ */
+export function estimateMarketPrice(listing: HouseListing): number {
+  const districtFactor = DISTRICT_PRICE_FACTOR[listing.district] ?? 1;
+  const rentFactor =
+    listing.rentType === 'whole' ? 1 : listing.rentType === 'apartment' ? 1.1 : 0.55;
+  const decoFactor =
+    listing.decoration === '豪装'
+      ? 1.25
+      : listing.decoration === '精装'
+        ? 1.12
+        : listing.decoration === '简装'
+          ? 1.0
+          : 0.88;
+  const floorFactor =
+    listing.floorLevel === '中楼层'
+      ? 1.05
+      : listing.floorLevel === '高楼层'
+        ? 0.98
+        : 0.95;
+  const subwayFactor = listing.nearSubway ? 1.06 : 1.0;
+  const base =
+    listing.areaSize *
+    BASE_PRICE_PER_SQM *
+    districtFactor *
+    rentFactor *
+    decoFactor *
+    floorFactor *
+    subwayFactor;
+  return Math.max(600, Math.round(base / 50) * 50);
+}
 
 export const MAX_LISTING_COUNT = 50000;
 export const DEFAULT_LISTING_COUNT = 20000;
