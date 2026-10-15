@@ -1,10 +1,9 @@
 import { memo } from 'react';
-import { Building2, MapPin, Train, BadgeCheck, User, Home, Building } from 'lucide-react';
-import { cn, formatNumber } from '@/lib/utils';
+import { MapPin } from 'lucide-react';
+import { formatNumber } from '@/lib/utils';
 import { useListingStore } from '@/store/useListingStore';
-import type { RentType } from '@/types/house';
 
-/** 首页 Hero：品牌标语 + 快捷找房入口（融合贝壳/自如首页风格） */
+/** 首页 Hero：品牌标语 + 附近找房主 CTA（快捷筛选在筛选面板，不在此重复） */
 function HeroImpl() {
   const { filters, setFilters, totalCount, userLocation, requestLocation, setMockLocation } =
     useListingStore();
@@ -18,40 +17,18 @@ function HeroImpl() {
     setFilters({ nearbyRadiusKm: 3 });
   };
 
-  /** 租型快捷筛选（再次点击取消） */
-  const toggleRentType = (t: RentType) =>
-    setFilters({ rentType: filters.rentType === t ? '' : t });
-
-  const quickChips: { label: string; icon: React.ReactNode; active: boolean; onClick: () => void }[] = [
-    { label: '整租', icon: <Home size={15} />, active: filters.rentType === 'whole', onClick: () => toggleRentType('whole') },
-    { label: '合租', icon: <Building size={15} />, active: filters.rentType === 'shared', onClick: () => toggleRentType('shared') },
-    { label: '独栋公寓', icon: <Building2 size={15} />, active: filters.rentType === 'apartment', onClick: () => toggleRentType('apartment') },
-    { label: '个人直租', icon: <User size={15} />, active: filters.platform === 'personal', onClick: () => setFilters({ platform: filters.platform === 'personal' ? '' : 'personal' }) },
-    { label: '近地铁', icon: <Train size={15} />, active: filters.nearSubwayOnly, onClick: () => setFilters({ nearSubwayOnly: !filters.nearSubwayOnly }) },
-    { label: '已核验', icon: <BadgeCheck size={15} />, active: filters.verifiedOnly, onClick: () => setFilters({ verifiedOnly: !filters.verifiedOnly }) },
-  ];
-
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-400 px-6 py-7 text-white shadow-lg shadow-brand-700/15 sm:px-10 sm:py-9">
-      {/* 装饰光晕与纹理：减淡浓度，营造克制的高级感 */}
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 px-6 py-8 text-white shadow-lg shadow-brand-700/15 sm:px-10 sm:py-10">
+      {/* 单一大光晕：唯一的装饰，保持克制 */}
       <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-12 h-64 w-64 rounded-full bg-brand-300/20 blur-3xl" />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-          backgroundSize: '24px 24px',
-        }}
-      />
 
-      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
             <MapPin size={12} />
             专注天津 · {formatNumber(totalCount)} 套真实在租房源
           </div>
-          <h2 className="text-2xl font-bold leading-tight tracking-wide sm:text-4xl">
+          <h2 className="text-3xl font-bold leading-tight tracking-wide sm:text-4xl">
             在天津，找一个
             <span className="mx-1.5 rounded-lg bg-white/95 px-2 text-brand-600">称心的家</span>
           </h2>
@@ -62,7 +39,7 @@ function HeroImpl() {
           </p>
         </div>
 
-        {/* 附近找房大按钮 */}
+        {/* 附近找房大按钮：页面唯一的主 CTA */}
         <button
           type="button"
           onClick={handleNearby}
@@ -86,26 +63,6 @@ function HeroImpl() {
             </span>
           </span>
         </button>
-      </div>
-
-      {/* 快捷筛选 chips：移动端横向滑动不折行，桌面端自动换行 */}
-      <div className="scrollbar-none relative -mb-1 mt-4 flex gap-2 overflow-x-auto pb-1 sm:mb-0 sm:flex-wrap sm:overflow-visible sm:pb-0">
-        {quickChips.map((c) => (
-          <button
-            key={c.label}
-            type="button"
-            onClick={c.onClick}
-            className={cn(
-              'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium backdrop-blur-sm transition',
-              c.active
-                ? 'bg-white text-brand-600 shadow-md'
-                : 'bg-white/20 text-white hover:bg-white/30',
-            )}
-          >
-            {c.icon}
-            {c.label}
-          </button>
-        ))}
       </div>
     </section>
   );

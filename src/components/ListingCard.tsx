@@ -45,16 +45,16 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <span
-          className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm"
+          className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-white shadow-sm"
           style={{ background: platformColor }}
         >
           {PLATFORM_LABELS[listing.platform]}
         </span>
-        <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm">
+        <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] text-white backdrop-blur-sm">
           {listing.images} 图
         </span>
         {isPersonal && (
-          <span className="absolute right-1.5 top-1.5 rounded-md bg-mint-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+          <span className="absolute right-1.5 top-1.5 rounded-md bg-mint-500 px-1.5 py-0.5 text-[11px] font-semibold text-white shadow-sm">
             0 佣金
           </span>
         )}
@@ -77,7 +77,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
           e.preventDefault();
           window.open(listing.sourceUrl, '_blank', 'noopener,noreferrer');
         }}
-        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-lg border border-charcoal-200/80 bg-white/95 px-2 py-1 text-[11px] font-medium text-charcoal-500 opacity-0 shadow-sm backdrop-blur-sm transition-all hover:border-brand-300 hover:text-brand-600 focus:opacity-100 group-hover:opacity-100"
+        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-lg border border-charcoal-200/80 bg-white/95 px-2 py-1 text-xs font-medium text-charcoal-500 opacity-0 shadow-sm backdrop-blur-sm transition-all hover:border-brand-300 hover:text-brand-600 focus:opacity-100 group-hover:opacity-100"
       >
         <ExternalLink size={12} />
         平台直达
@@ -86,7 +86,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
       {/* 内容 */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-sm font-medium text-charcoal-900 transition-colors group-hover:text-brand-600">
+          <h3 className="line-clamp-1 text-[15px] font-medium text-charcoal-900 transition-colors group-hover:text-brand-600">
             {listing.title}
           </h3>
           {listing.isVerified && (
@@ -101,7 +101,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
           </span>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-charcoal-500">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-charcoal-500">
           <span className="rounded bg-charcoal-50 px-1.5 py-0.5 text-charcoal-600">
             {RENT_TYPE_LABELS[listing.rentType]}
           </span>
@@ -123,7 +123,7 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
           <span>{listing.decoration}</span>
         </div>
 
-        <div className="mt-1.5 flex items-center gap-1 text-[11px] text-charcoal-400">
+        <div className="mt-1.5 flex items-center gap-1 text-xs text-charcoal-400">
           {dist !== null && (
             <span className="mr-1 rounded bg-blue-50 px-1.5 py-0.5 font-medium text-blue-600">
               {mapPin ? '距标点' : '距您'} {formatDistance(dist)}
@@ -144,12 +144,12 @@ function ListingCardImpl({ listing }: { listing: HouseListing }) {
 
         <div className="mt-auto flex items-end justify-between pt-1.5">
           <div>
-            <span className="text-lg font-bold text-brand-600">
+            <span className="text-xl font-bold text-brand-600">
               ¥{formatNumber(listing.price)}
             </span>
             <span className="text-xs text-charcoal-400">/月</span>
           </div>
-          <span className="text-[11px] text-charcoal-400 transition-colors group-hover:text-brand-500">
+          <span className="text-xs text-charcoal-400 transition-colors group-hover:text-brand-500">
             {isPersonal ? '房东直租' : listing.landlord} · {timeAgo(listing.publishedAt)} · 查看详情 →
           </span>
         </div>

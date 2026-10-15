@@ -11,8 +11,8 @@ export default function ListingList() {
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => parentRef.current,
-    // 卡片 ~132px + 卡片间留白 10px（item 容器 pb-2.5 计入实测高度）
-    estimateSize: () => 142,
+    // 字号提升后卡片 ~136px + 留白 10px（measureElement 关闭，按估算定位）
+    estimateSize: () => 148,
     overscan: 6,
     measureElement: undefined,
   });

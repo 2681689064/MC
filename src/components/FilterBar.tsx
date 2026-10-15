@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, RotateCcw, SlidersHorizontal, X } from 'lucide-react';
+import {
+  Search,
+  RotateCcw,
+  SlidersHorizontal,
+  X,
+  LayoutGrid,
+  Map,
+  Columns2,
+} from 'lucide-react';
 import { DISTRICTS } from '@/data/tianjin';
 import { cn, formatNumber } from '@/lib/utils';
 import LocationControl from './LocationControl';
-import {
-  DEFAULT_FILTERS,
-  SORT_OPTIONS,
-  useListingStore,
-  type SortKey,
-} from '@/store/useListingStore';
+import { SORT_OPTIONS, useListingStore, type SortKey } from '@/store/useListingStore';
 import {
   PLATFORM_LABELS,
   RENT_TYPE_LABELS,
@@ -16,6 +19,9 @@ import {
   type Platform,
   type RentType,
 } from '@/types/house';
+
+/** split = 初始页同屏（列表 + 地图板块） */
+export type ViewMode = 'split' | 'list' | 'map';
 
 const DECORATIONS: Decoration[] = ['毛坯', '简装', '精装', '豪装'];
 const PLATFORMS: Platform[] = [
@@ -38,6 +44,13 @@ const PRICE_PRESETS = [
   { label: '2500-4000', min: 2500, max: 4000 },
   { label: '4000-6000', min: 4000, max: 6000 },
   { label: '6000+', min: 6000, max: 20000 },
+];
+// 精简为 5 个常用档位（默认 2 万），自定义值走 footer 输入框
+const COUNT_OPTIONS = [5000, 10000, 20000, 30000, 50000];
+const VIEW_TABS: { key: ViewMode; label: string; icon: React.ReactNode }[] = [
+  { key: 'split', label: '同屏', icon: <Columns2 size={13} /> },
+  { key: 'list', label: '列表', icon: <LayoutGrid size={13} /> },
+  { key: 'map', label: '地图', icon: <Map size={13} /> },
 ];
 
 function Chip({
@@ -66,8 +79,14 @@ function Chip({
   );
 }
 
-export default function FilterBar() {
-  const { filters, setFilters, resetFilters, sort, setSort, totalCount } =
+export default function FilterBar({
+  view,
+  onViewChange,
+}: {
+  view: ViewMode;
+  onViewChange: (v: ViewMode) => void;
+}) {
+  const { filters, setFilters, resetFilters, sort, setSort, totalCount, setTotalCount } =
     useListingStore();
   const filtered = useListingStore((s) => s.getFiltered());
   const userLocation = useListingStore((s) => s.userLocation);
@@ -86,12 +105,14 @@ export default function FilterBar() {
   }, [keywordDraft, filters.keyword, setFilters]);
 
   return (
-    <section className="space-y-3">
-      {/* 搜索 + 排序 */}
+    /* 单张筛选面板：搜索、条件、结果统计收拢在同一容器内，
+       替代原先「工具栏卡 + 散浮 chips」的多层堆叠 */
+    <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+      {/* 搜索 + 排序 + 定位 + 重置 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search
-            size={18}
+            size={17}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400"
           />
           <input
@@ -99,7 +120,7 @@ export default function FilterBar() {
             value={keywordDraft}
             onChange={(e) => setKeywordDraft(e.target.value)}
             placeholder="搜索小区 / 板块 / 地铁站 / 标题"
-            className="h-10 w-full rounded-xl border border-charcoal-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className="h-10 w-full rounded-xl bg-charcoal-50 pl-10 pr-3 text-sm outline-none transition placeholder:text-charcoal-400 focus:bg-white focus:ring-2 focus:ring-brand-200"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -111,7 +132,7 @@ export default function FilterBar() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="h-10 rounded-xl border border-charcoal-200 bg-white px-3 text-sm outline-none focus:border-brand-400"
+            className="h-10 rounded-xl bg-charcoal-50 px-3 text-sm text-charcoal-600 outline-none transition hover:bg-charcoal-100 focus:ring-2 focus:ring-brand-200"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
@@ -123,7 +144,8 @@ export default function FilterBar() {
           <button
             type="button"
             onClick={resetFilters}
-            className="inline-flex h-10 items-center gap-1 rounded-xl border border-charcoal-200 bg-white px-3 text-sm text-charcoal-600 transition hover:bg-charcoal-50"
+            title="重置筛选条件"
+            className="inline-flex h-10 items-center gap-1 rounded-xl bg-charcoal-50 px-3 text-sm text-charcoal-600 transition hover:bg-charcoal-100"
           >
             <RotateCcw size={14} />
             重置
@@ -133,7 +155,7 @@ export default function FilterBar() {
 
       {/* 标点找房：地图标点存在时显示（优先于定位锚点） */}
       {mapPin && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-brand-50 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2">
           <span className="mr-1 text-xs font-medium text-brand-600">标点找房</span>
           {PIN_RADIUS_OPTIONS.map((km) => (
             <Chip
@@ -163,7 +185,7 @@ export default function FilterBar() {
 
       {/* 附近搜索：定位成功且无标点时显示 */}
       {!mapPin && userLocation && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2">
           <span className="mr-1 text-xs font-medium text-blue-500">附近找房</span>
           {NEARBY_OPTIONS.map((km) => (
             <Chip
@@ -216,8 +238,7 @@ export default function FilterBar() {
         ))}
       </div>
 
-      {/* 类型/户型/装修：扁平化单行流式布局，chips 逐个换行填满行宽，
-          避免整组换行导致第二行大面积空白 */}
+      {/* 类型/户型/装修：扁平化单行流式布局，chips 逐个换行填满行宽 */}
       <div className="flex flex-wrap items-center gap-1.5 text-sm">
         <span className="mr-0.5 text-xs font-medium text-charcoal-400">类型</span>
         <Chip
@@ -280,7 +301,7 @@ export default function FilterBar() {
             </Chip>
           );
         })}
-        <label className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-charcoal-100 px-3 py-1 text-sm text-charcoal-700">
+        <label className="ml-2 inline-flex cursor-pointer items-center gap-1.5 text-sm text-charcoal-600">
           <input
             type="checkbox"
             checked={filters.nearSubwayOnly}
@@ -289,7 +310,7 @@ export default function FilterBar() {
           />
           近地铁
         </label>
-        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-charcoal-100 px-3 py-1 text-sm text-charcoal-700">
+        <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-charcoal-600">
           <input
             type="checkbox"
             checked={filters.verifiedOnly}
@@ -300,22 +321,68 @@ export default function FilterBar() {
         </label>
       </div>
 
-      <div className="flex items-center justify-between border-t border-charcoal-100 pt-2 text-sm text-charcoal-500">
-        <span>
-          共 <span className="font-semibold text-charcoal-900 tabular-nums">{formatNumber(filtered.length)}</span> 套
-          <span className="ml-1 text-charcoal-400">
-            / 总库 {formatNumber(totalCount)}
-          </span>
+      {/* 面板 footer：结果统计 + 数据规模（演示控制，视觉降级）+ 视图切换 */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-charcoal-100 pt-2.5 text-sm text-charcoal-500">
+        <span className="flex items-center">
+          共{' '}
+          <span className="mx-0.5 font-semibold tabular-nums text-charcoal-900">
+            {formatNumber(filtered.length)}
+          </span>{' '}
+          套
+          <span className="mx-1 text-charcoal-300">/</span>
+          总库
+          <select
+            value={COUNT_OPTIONS.includes(totalCount) ? totalCount : 'custom'}
+            onChange={(e) => {
+              if (e.target.value !== 'custom') setTotalCount(Number(e.target.value));
+            }}
+            className="-ml-0.5 cursor-pointer rounded-md px-1 py-0.5 text-xs tabular-nums text-charcoal-500 outline-none transition hover:bg-charcoal-50 hover:text-charcoal-800"
+            aria-label="选择数据规模"
+          >
+            {COUNT_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {formatNumber(n)} 套
+              </option>
+            ))}
+            <option value="custom">自定义</option>
+          </select>
+          {!COUNT_OPTIONS.includes(totalCount) && (
+            <input
+              type="number"
+              min={100}
+              max={50000}
+              step={100}
+              value={totalCount}
+              onChange={(e) => setTotalCount(Number(e.target.value))}
+              className="ml-1 w-20 rounded-md bg-charcoal-50 px-2 py-0.5 text-xs tabular-nums outline-none focus:ring-2 focus:ring-brand-200"
+              aria-label="自定义房源数量"
+            />
+          )}
           {filters.district && (
-            <span className="ml-2 rounded bg-brand-50 px-2 py-0.5 text-brand-700">
+            <span className="ml-2 rounded bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
               {filters.district}
             </span>
           )}
         </span>
-      </div>
 
-      {/* 静默引用 DEFAULT_FILTERS 防止 lint unused */}
-      <span className="hidden">{Object.keys(DEFAULT_FILTERS).length}</span>
+        <div className="inline-flex shrink-0 rounded-full bg-charcoal-50 p-0.5">
+          {VIEW_TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onViewChange(t.key)}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                view === t.key
+                  ? 'bg-white text-charcoal-900 shadow-sm'
+                  : 'text-charcoal-400 hover:text-charcoal-700',
+              )}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

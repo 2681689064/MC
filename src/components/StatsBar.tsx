@@ -49,7 +49,7 @@ function StatCard({ label, value, hint, icon, emphasized }: StatCardProps) {
       >
         {value}
       </div>
-      {hint && <div className="mt-0.5 text-[11px] text-charcoal-400">{hint}</div>}
+      {hint && <div className="mt-0.5 text-xs text-charcoal-400">{hint}</div>}
     </div>
   );
 }
@@ -169,7 +169,7 @@ export default function StatsBar() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-charcoal-600">
+          <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-xs text-charcoal-600">
             {platformData.map((d) => (
               <span key={d.key} className="inline-flex items-center gap-1.5">
                 <span
